@@ -1,0 +1,581 @@
+<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Togoversigt Danmark</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#e9eef8;font:15px system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1450px;margin:auto;padding:26px 22px}h1{font-size:27px;margin:0 0 18px;font-weight:700}form{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 20px}label{font-weight:600}input{min-width:270px;max-width:100%;padding:12px 14px;border:1px solid #475569;background:#1b293e;color:white;border-radius:8px;font:inherit}button{background:#2563eb;color:white;border:0;border-radius:8px;padding:12px 19px;font:inherit;font-weight:600;cursor:pointer}button:hover{background:#1d4ed8}#status{font-size:13px;margin-left:auto}.live{color:#86efac}.error{color:#fca5a5}.waiting{color:#cbd5e1}.heading{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px}h2{font-size:20px;margin:0}#shown{font-size:13px;color:#a7b6ca;margin:0}.tablewrap{border:1px solid #34445d;border-radius:9px;overflow-x:auto;overflow-y:visible}table{border-collapse:collapse;width:100%;min-width:940px}th,td{text-align:left;padding:12px 14px;border-bottom:1px solid #29384d;white-space:nowrap}th{background:#1e2c42;color:#dce7f6;position:sticky;top:0;z-index:1}tbody tr{background:var(--operator-row,#182437)!important;border-left:5px solid var(--operator-row,#182437)}tbody tr:hover{filter:brightness(1.2)}.sub{display:block;font-size:11px;color:#a5b4c7;margin-top:3px}.route{white-space:normal;min-width:160px;max-width:440px}.late{color:#fbbf24}.cancelled{color:#f87171;font-weight:700}td{font-variant-numeric:tabular-nums}.operator-cell{white-space:nowrap}.op-mark{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 5px;border-radius:5px;margin-right:9px;background:#334155;color:#f8fafc;font-size:11px;font-weight:800;letter-spacing:.02em;vertical-align:middle}.op-name{vertical-align:middle}@media(max-width:650px){main{padding:18px 12px}h1{font-size:22px}input{flex:1;min-width:190px}#status{margin-left:0;width:100%}th,td{padding:10px 9px}}
+.registry{font-size:12px;color:#a7b6ca;margin:-8px 0 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.fileLabel{font-size:12px;font-weight:500;color:#bfdbfe;cursor:pointer;text-decoration:underline}.fileLabel:hover{color:white}
+#savePdf{background:#475569}#savePdf:hover{background:#64748b}
+@page{size:A4 landscape;margin:10mm}
+@media print{
+ :root{color-scheme:light}
+ html,body{background:white!important;color:#111827!important;margin:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ main{max-width:none!important;padding:0!important}
+ form,#status,.registry{display:none!important}
+ h1{font-size:18pt;margin:0 0 6mm;color:#111827!important}
+ h2{font-size:13pt;color:#111827!important}
+ .heading{margin-bottom:3mm}
+ .tablewrap{overflow:visible!important;border:0!important}
+ table{min-width:0!important;width:100%!important;font-size:8pt;table-layout:auto}
+ th,td{padding:5px 6px!important;white-space:nowrap;border-bottom:1px solid #cbd5e1!important}
+ th{position:static!important;background:#e2e8f0!important;color:#111827!important}
+ thead{display:table-header-group}
+ tr{break-inside:avoid;page-break-inside:avoid}
+ tbody tr{background:var(--operator-row,#edf2f7)!important}
+ .route{min-width:0!important;max-width:210px!important;white-space:normal!important}
+ .op-name{font-size:7.5pt}
+ .op-mark{margin-right:4px!important}
+ .cancelled{color:#b91c1c!important}
+}
+
+.train-link{background:none;border:0;padding:0;color:#bfdbfe;font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-weight:600}.train-link:hover{color:white}
+dialog{background:#101c2d;color:#edf3ff;border:1px solid #52647d;border-radius:12px;width:min(900px,94vw);max-height:85vh;padding:22px}dialog::backdrop{background:#000b}dialog h3{margin:0 0 12px}.dialog-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.dialog-head button{padding:7px 13px}.schedule-table{width:100%;min-width:0}.schedule-table td,.schedule-table th{padding:9px 12px}.schedule-note{color:#b6c5d9;margin:12px 0} @media print{dialog{display:none!important}}
+</style></head><body><main><h1>Togoversigt Danmark</h1>
+<form id="stationForm"><label for="station">Station</label><input id="station" list="stationer" value="Padborg" placeholder="Søg også tekniske stationer eller skriv stationskode" autocomplete="off" spellcheck="false"><datalist id="stationer"></datalist><button type="submit">Søg</button><button type="button" id="savePdf" title="Download togoversigten direkte som PDF">Gem som PDF</button><span id="status" class="waiting" role="status">Forbinder…</span></form>
+
+<div class="heading"><h2 id="stationName">Padborg</h2></div>
+<div class="tablewrap"><table><thead><tr><th>Spor</th><th>Tog</th><th>Operatør</th><th>Rute</th><th>Ankomst</th><th>Afgang</th><th>Forventet</th></tr></thead><tbody id="rows"></tbody></table></div>
+
+<dialog id="scheduleDialog"><div class="dialog-head"><h3 id="scheduleTitle">Togets køreplan</h3><div style="display:flex;gap:8px"><button type="button" id="toggleTrainDiagnostics">Vis diagnose</button><button type="button" id="closeSchedule">Luk</button></div></div><div id="scheduleBody"></div><section id="trainDiagnostics" hidden style="margin-top:16px;border-top:1px solid #52647d;padding-top:12px"><h4>Diagnose – rå MitTog-data</h4><p class="schedule-note">Her vises præcis de data, MitTog sender. Download JSON-filen og upload den i chatten, hvis køreplanen stadig mangler stationer eller tider.</p><button type="button" id="downloadTrainDiagnostics">Hent diagnose (JSON)</button><pre id="trainDiagnosticsText" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;background:#0b1422;padding:12px;border-radius:8px;font-size:12px"></pre></section></dialog>
+
+<script>
+'use strict';
+const hiddenCodes=new Set('BG BM BF CG CM CF CB CX HG HM HF HB PG PM GL GD GK GX G GM FG GB TG TM TF RG RB FW GF FX MF FB M FM FE ØM SM VM AM NM'.split(' ')); // Kun farvemarkering; aldrig filtrering
+const nonPassengerTypes=new Set(['Freight','Engineering','Light']);
+const $=id=>document.getElementById(id);
+const state={sockets:new Map(),status:new Map(),snapshots:new Map()};
+
+const operatorGroups=[
+ ['DB Cargo Scandinavia','G GS GD GK GM GF GB'],
+ ['Hector Rail','HG HS HK HM HP HF HB'],
+ ['TX Logistik','TG TS TM TF TB'],
+ ['Green Cargo','CG CS CM'],
+ ['Viking Rail','WG WS WM WF WB'],
+ ['Contec Rail','KG KM KB'],
+ ['Spitzke','ZG ZM ZB'],
+ ['Banedanmark','BM BS'],
+ ['DSB','L IL IC RØ RV RR EC EX EJ IE FP SK FS M FM EP IB'],
+ ['DSB Vores Tog','AR AM AX AF AE AP PM'],
+ ['Lokaltog','LF LM LP LR PM'],
+ ['Nordjyske Jernbaner','NR NM NP PM NF'],
+ ['Midtjyske Jernbaner','MR MM MP PM'],
+ ['SJ AB','SM SP XP XM'],
+ ['Veterantog (flere operatører)','VM VP'],
+ ['VR Sverige AB','ØM ØP'],
+ ['DSB S-tog','MS NS PS ØS']
+];
+const operatorsByCode=new Map();
+for(const [operator,codes] of operatorGroups){for(const code of codes.split(' ')){
+ if(!operatorsByCode.has(code))operatorsByCode.set(code,[]);
+ operatorsByCode.get(code).push(operator);
+}}
+function operatorOf(t){
+ const code=String(val(t,'Product','product')||'').trim().toUpperCase();
+ const names=operatorsByCode.get(code)||[];
+ return names.length===1?names[0]:names.length>1?'Flere mulige: '+names.join(' / '):'Ikke oplyst';
+}
+const operatorRowColors={
+ "DB Cargo Scandinavia": "#254c48",
+ "Hector Rail": "#483c67",
+ "TX Logistik": "#493d29",
+ "Green Cargo": "#254d35",
+ "Viking Rail": "#2c4966",
+ "Contec Rail": "#55402d",
+ "Spitzke": "#4d334e",
+ "Banedanmark": "#37505a",
+ "DSB": "#542f36",
+ "DSB Vores Tog": "#514530",
+ "Lokaltog": "#314d40",
+ "Nordjyske Jernbaner": "#3c4566",
+ "Midtjyske Jernbaner": "#4b403b",
+ "SJ AB": "#25495a",
+ "Veterantog (flere operatører)": "#514a32",
+ "VR Sverige AB": "#3e345b",
+ "DSB S-tog": "#4b3150"
+};
+const operatorMarks={
+ 'DB Cargo Scandinavia':'DB','Hector Rail':'HR','TX Logistik':'TX','Green Cargo':'GC',
+ 'Viking Rail':'VR','Contec Rail':'CR','Spitzke':'SZ','Banedanmark':'BD',
+ 'DSB':'DSB','DSB Vores Tog':'VT','Lokaltog':'LT','Nordjyske Jernbaner':'NJ',
+ 'Midtjyske Jernbaner':'MJ','SJ AB':'SJ','Veterantog':'VT','VR Sverige AB':'VR',
+ 'DSB S-tog':'S'
+};
+function addOperatorCell(tr,t){
+ const name=operatorOf(t),td=document.createElement('td');td.className='operator-cell';
+ const mark=document.createElement('span');mark.className='op-mark';
+ mark.textContent=operatorMarks[name]||'?';mark.title='Tekstsymbol – ikke officielt logo';
+ const label=document.createElement('span');label.className='op-name';label.textContent=name;
+ td.append(mark,label);tr.append(td);
+}
+function val(t,...keys){for(const k of keys)if(t[k]!==undefined&&t[k]!==null&&t[k]!=='')return t[k];return null}
+function parseDate(x){if(!x)return null;if(typeof x==='number')return new Date(x);let m=String(x).match(/^(\d{2})-(\d{2})-(\d{4})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);if(m)return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+(m[6]||0));const d=new Date(x);return Number.isFinite(d.getTime())?d:null}
+function trainTime(t){return val(t,'ScheduleTimeDeparture','ScheduleTimeArrival','ScheduleTime','ScheduledDepartureTime','ScheduledArrivalTime','EstimatedTimeDeparture','EstimatedTimeArrival')}
+function fmtTime(x){const d=parseDate(x);return d?d.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'–'}
+function isZeroClock(x){return typeof x==='string' && /(?:^|[ T])00[:.]00[:.]00(?:$|\D)/.test(x) || x==='00.00.00' || x==='00:00:00'}
+function displayScheduled(x){
+ if(!x||isZeroClock(x))return '';
+ const d=parseDate(x);if(!d)return '–';
+ const h=String(d.getHours()).padStart(2,'0'),m=String(d.getMinutes()).padStart(2,'0'),sec=String(d.getSeconds()).padStart(2,'0');
+ return sec==='30'?`${h}.${m}½`:`${h}.${m}.${sec}`;
+}
+function stationCase(x){return String(x||'–').replace(/[A-Za-zÆØÅæøå]+/g,part=>part.charAt(0).toLocaleUpperCase('da-DK')+part.slice(1).toLocaleLowerCase('da-DK'))}
+function eventTime(t){
+ // FORVENTET har altid forrang, også når den er tidligere end begge planlagte tider.
+ // Sammenlign hele tidsstempler (inkl. dato), men vis kun klokkeslæt.
+ const valid=keys=>keys.map(k=>isZeroClock(t[k])?null:parseDate(t[k]))
+   .filter(d=>d&&Number.isFinite(d.getTime())&&d.getFullYear()>2000);
+ const expected=valid(['EstimatedTimeArrival','EstimatedTimeDeparture']);
+ if(expected.length)return Math.min(...expected.map(d=>d.getTime()));
+ const planned=valid(['ScheduleTimeArrival','ScheduleTimeDeparture','ScheduleTime','ScheduledArrivalTime','ScheduledDepartureTime']);
+ return planned.length?Math.min(...planned.map(d=>d.getTime())):Number.POSITIVE_INFINITY;
+}
+function sortTime(t){return eventTime(t)}
+function isAlreadyGone(t, now=Date.now()){
+ // En registreret faktisk afgang eller afgået-status skjules straks.
+ const status=String(val(t,'Status','TrainStatus','DepartureStatus','RunningStatus')||'').toLowerCase();
+ if(['departed','afgået','afgaaet','passed','left'].includes(status))return true;
+ const actual=val(t,'ActualTimeDeparture','ActualDepartureTime','RealTimeDeparture');
+ const actualDate=isZeroClock(actual)?null:parseDate(actual);
+ if(actualDate&&actualDate.getFullYear()>2000&&actualDate.getTime()<=now)return true;
+ // Behold toget indtil fem minutter efter seneste planlagte ankomst/afgang.
+ // Hvis en forventet tid er senere, er det i stedet den, der styrer fristen.
+ const dates=keys=>keys.map(k=>isZeroClock(t[k])?null:parseDate(t[k]))
+   .filter(d=>d&&Number.isFinite(d.getTime())&&d.getFullYear()>2000)
+   .map(d=>d.getTime());
+ const planned=dates(['ScheduleTimeArrival','ScheduleTimeDeparture','ScheduleTime','ScheduledArrivalTime','ScheduledDepartureTime']);
+ const expected=dates(['EstimatedTimeArrival','EstimatedTimeDeparture']);
+ const plannedEnd=planned.length?Math.max(...planned):-Infinity;
+ const expectedEnd=expected.length?Math.max(...expected):-Infinity;
+ const reference=Math.max(plannedEnd,expectedEnd);
+ return Number.isFinite(reference)&&now>reference+5*60*1000;
+}
+function reasons(t){const a=[];const product=val(t,'Product','product');const trainType=val(t,'TrainType','trainType','serviceType');const stopType=val(t,'StopType','stopType');if(hiddenCodes.has(product))a.push('Skjult produktkode');if(stopType==='TechnicalStop')a.push('TechnicalStop');if(stopType==='PassThrough')a.push('PassThrough');if(trainType&&trainType!=='Passenger')a.push('TrainType: '+trainType);return a}
+function keyOf(t){
+ const number=val(t,'TrainId','PublicTrainId','TrainID','id','number');
+ const product=val(t,'Product','product')||'';
+ // Identitet uden særskilt gemt dato; tid bruges kun som nødløsning.
+ const trip=val(t,'ScheduleTimeDeparture','ScheduleTimeArrival','ScheduleTime','ScheduledDepartureTime','ScheduledArrivalTime');
+ // Forskellige kørsler med samme tognummer må ikke overskrive hinanden.
+ return number?`${number}|${product}|${trip||''}`:JSON.stringify(t).slice(0,500);
+}
+function ingest(obj,source){
+ const data=obj?.data?.Trains?obj.data:obj?.Trains?obj:null;
+ if(!data||!Array.isArray(data.Trains))return false;
+ // Erstat altid hele seneste stations-/sporbillede fra denne forbindelse.
+ // Ingen tidligere tog beholdes, når de ikke længere optræder i nye data.
+ const latest=new Map();
+ for(const t of data.Trains){if(t&&typeof t==='object')latest.set(keyOf(t),t)}
+ state.snapshots.set(source,latest);
+ render();return true;
+}
+function routeOf(t){
+ const routes=Array.isArray(t.Routes)?t.Routes:[];
+ const seen=new Set(), names=[];
+ for(const r of routes){
+  if(!r||typeof r!=='object')continue;
+  const a=r.OriginStationId, b=r.DestinationStationId;
+  const route=stationCase(a)+' → '+stationCase(b);
+  if(!seen.has(route)){seen.add(route);names.push(route)}
+ }
+ return names.length?names.join(' / '):'–';
+}
+function departureDisplay(t){
+ const raw=val(t,'ScheduleTimeDeparture','ScheduledDepartureTime');
+ if(raw&&!isZeroClock(raw))return displayScheduled(raw);
+ // Udgangsstation PA: 00:00:00 betyder en tom afgangscelle.
+ const routes=Array.isArray(t.Routes)?t.Routes:[];
+ const station=stationCode();
+ const startsHere=routes.some(r=>String(r?.OriginStationId||'').toUpperCase()===station);
+ const endsHere=routes.some(r=>String(r?.DestinationStationId||'').toUpperCase()===station);
+ if(startsHere||endsHere)return '';
+ // Tog på en gennemgående rute uden en registreret afgang her.
+ return routes.length?'Aflyst':'';
+}
+function estimatedOf(t){
+ const options=['EstimatedTimeArrival','EstimatedTimeDeparture']
+   .map(k=>isZeroClock(t[k])?null:parseDate(t[k])).filter(d=>d&&Number.isFinite(d.getTime())&&d.getFullYear()>2000);
+ return options.length?fmtTime(new Date(Math.min(...options.map(d=>d.getTime())))):'–';
+}
+function addCell(tr,value,cls){const td=document.createElement('td');if(cls)td.className=cls;td.textContent=value??'–';tr.append(td);return td}
+let scheduleRequestId=0;
+let currentTrainDiagnostics=null;
+$('toggleTrainDiagnostics').addEventListener('click',()=>{
+ const panel=$('trainDiagnostics');
+ panel.hidden=!panel.hidden;
+ $('toggleTrainDiagnostics').textContent=panel.hidden?'Vis diagnose':'Skjul diagnose';
+});
+$('downloadTrainDiagnostics').addEventListener('click',()=>{
+ if(!currentTrainDiagnostics)return;
+ const blob=new Blob([JSON.stringify(currentTrainDiagnostics,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='MitTog_diagnose_'+String(currentTrainDiagnostics.train?.Product||'Tog')+'_'+String(currentTrainDiagnostics.train?.PublicTrainId||currentTrainDiagnostics.train?.TrainId||'ukendt')+'.json';
+ document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+});
+function updateTrainDiagnostics(){
+ if(!currentTrainDiagnostics)return;
+ const d=currentTrainDiagnostics;
+ const routes=Array.isArray(d.train?.Routes)?d.train.Routes:[];
+ const summary={
+  tog:String(d.train?.Product||'')+' '+String(d.train?.PublicTrainId||d.train?.TrainId||''),
+  ruter:routes.length,
+  stationer_i_Routes_Stations:routes.map(r=>Array.isArray(r.Stations)?r.Stations.length:0),
+  andre_stopfelter:routes.map(r=>Object.fromEntries(['Stops','CallingPoints','Timetable','Schedule','TrainStops','StationStops','RouteStations'].filter(k=>Array.isArray(r[k])).map(k=>[k,r[k].length]))),
+  stop_i_visningen:d.stops?.map(x=>({station:x.station,ankomst:x.arrival,afgang:x.departure,forventet:x.estimated,aflyst:x.cancelled}))||[],
+  stationsopslag:d.lookups,
+  datakilde:'MitTog WebSocket – aktuelt stationssnapshot'
+ };
+ $('trainDiagnosticsText').textContent=JSON.stringify(summary,null,2);
+}
+
+function fetchStationTrain(code, target, timeout=2800){
+ return new Promise(resolve=>{
+  let done=false, sockets=[],timer;const diag={station:code,connections:[],messages:0,trainsReceived:0,matches:0};
+  const finish=(result)=>{if(done)return;done=true;clearTimeout(timer);sockets.forEach(w=>{try{w.close()}catch{}});resolve({train:result,diagnostic:diag})};
+  const matches=x=>{
+   const ids=o=>[o?.TrainId,o?.PublicTrainId,o?.TrainID].filter(v=>v!==null&&v!==undefined).map(String);
+   const a=ids(x),b=ids(target);
+   const same=a.some(id=>b.includes(id));
+   const ap=String(x?.Product||'').toUpperCase(),bp=String(target?.Product||'').toUpperCase();
+   return same&&(!ap||!bp||ap===bp);
+  };
+  timer=setTimeout(()=>finish(null),timeout);
+  for(const type of ['departure','arrival']){
+   try{
+    const ws=new WebSocket(`wss://api.mittog.dk/api/ws/${type}/${encodeURIComponent(code)}/dinstation/`);
+    sockets.push(ws);const connection={type,status:'forbinder'};diag.connections.push(connection);
+    ws.onopen=()=>{connection.status='forbundet'};
+    ws.onclose=()=>{connection.status=connection.status==='forbundet'?'lukket':connection.status};
+    ws.onmessage=e=>{try{
+     const o=JSON.parse(e.data),trains=o?.data?.Trains||o?.Trains;diag.messages++;
+     if(Array.isArray(trains)){
+      diag.trainsReceived+=trains.length;
+      const found=trains.filter(matches);diag.matches+=found.length;
+      if(found.length)finish(found.reduce((acc,x)=>({...acc,...x}),{}));
+     }
+    }catch{}};
+    ws.onerror=()=>{};
+   }catch{}
+  }
+ });
+}
+async function enrichScheduleStops(stops,train,body,requestId){
+ const current=stationCode();
+ // & og % markerer udenlandske stationskoder i MitTogs rutedata.
+ // Slå kun danske stationer op, og undgå at fjerne præfikset før landefilteret.
+ const candidates=[...new Set(stops.map(x=>String(x.station||'').trim().toUpperCase()))]
+  .filter(x=>x&&!/^[&%]/.test(x)&&x!==current&&/^[A-ZÆØÅ0-9]{1,7}$/.test(x));
+ const progress=document.createElement('p');progress.className='schedule-note';
+ progress.textContent=`Henter danske stationsdata: 0/${candidates.length} stationer…`;
+ body.insertBefore(progress,body.querySelector('.schedule-table')?.parentElement||null);
+ let next=0,finished=0,found=0;
+ async function worker(){
+  while(next<candidates.length&&requestId===scheduleRequestId){
+   const code=candidates[next++];
+   const result=await fetchStationTrain(code,train,4500);
+   const data=result.train;
+   if(currentTrainDiagnostics&&requestId===scheduleRequestId){currentTrainDiagnostics.lookups.push(result.diagnostic);updateTrainDiagnostics()}
+   if(requestId!==scheduleRequestId)return;
+   finished++;
+   if(data){
+    found++;
+    const stop=stops.find(x=>String(x.station||'').replace(/^[&%]/,'').toUpperCase()===code);
+    if(stop){
+     stop.arrival=val(data,'ScheduleTimeArrival','ScheduledArrivalTime')||stop.arrival;
+     stop.departure=val(data,'ScheduleTimeDeparture','ScheduledDepartureTime')||stop.departure;
+     stop.estimated=val(data,'EstimatedTimeArrival','EstimatedTimeDeparture')||stop.estimated;
+     const tr=stop.row;
+     if(tr){
+      tr.cells[1].textContent=stop.arrival&&!isZeroClock(stop.arrival)?displayScheduled(stop.arrival):'';
+      tr.cells[2].textContent=stop.departure&&!isZeroClock(stop.departure)?displayScheduled(stop.departure):'';
+      tr.cells[3].textContent=stop.estimated&&!isZeroClock(stop.estimated)?fmtTime(stop.estimated):'';
+     }
+    }
+   }
+   progress.textContent=`Henter stationsdata: ${finished}/${candidates.length} · tider fundet ved ${found} stationer`;
+  }
+ }
+ await Promise.all(Array.from({length:Math.min(4,candidates.length)},worker));
+ if(requestId===scheduleRequestId)progress.textContent=`Danske stationsopslag afsluttet: ${found} af ${candidates.length} stationer leverede data for toget. Tomme felter er ikke oplyst af MitTog.`;
+}
+function showTrainSchedule(t){
+ const requestId=++scheduleRequestId;
+ const dlg=$('scheduleDialog'),body=$('scheduleBody');body.replaceChildren();
+ $('trainDiagnostics').hidden=true;$('toggleTrainDiagnostics').textContent='Vis diagnose';
+ currentTrainDiagnostics={train:JSON.parse(JSON.stringify(t)),stops:[],lookups:[],selectedStation:stationCode()};
+ const product=val(t,'Product','product')||'',num=val(t,'PublicTrainId','TrainId','number','id')||'–';
+ $('scheduleTitle').textContent='Køreplan – '+(product?product+' ':'')+num;
+ const note=document.createElement('p');note.className='schedule-note';
+ note.textContent='Udenlandske stationer vises uden tider. Kun danske stationer undersøges for ankomst og afgang.';body.append(note);
+ const get=(o,...keys)=>{for(const k of keys)if(o?.[k]!==undefined&&o[k]!==null&&o[k]!=='')return o[k];return null};
+ const stops=[];
+ const stationKey=x=>String(x||'').toUpperCase();
+ function addStops(arr){
+  if(!Array.isArray(arr))return;
+  for(const x of arr){
+   if(!x||typeof x!=='object')continue;
+   const station=get(x,'StationId','StationName','stationId','stationName','Name','name','LocationId');
+   if(!station)continue;
+   const arrival=get(x,'ScheduleDateTimeArrival','ScheduleTimeArrival','ScheduledArrivalTime','ArrivalTime','Arrival');
+   const departure=get(x,'ScheduleDateTimeDeparture','ScheduleTimeDeparture','ScheduledDepartureTime','DepartureTime','Departure');
+   const estimated=get(x,'ExpectedDateTimeArrival','ExpectedDateTime','ExpectedDateTimeDeparture','EstimatedTimeArrival','EstimatedTimeDeparture','ExpectedArrival','ExpectedDeparture');
+   const cancelled=['IsCancelled','IsCancelledArrival','IsCancelledDeparture'].some(k=>x[k]===true);
+   stops.push({station,arrival,departure,estimated,cancelled});
+  }
+ }
+ for(const r of Array.isArray(t.Routes)?t.Routes:[]){
+  addStops(r.Stations);
+  for(const field of ['Stops','CallingPoints','Timetable','Schedule','TrainStops','StationStops','RouteStations'])addStops(r[field]);
+ }
+ for(const field of ['Stops','Stations','CallingPoints','Timetable','Schedule','TrainStops'])addStops(t[field]);
+ // Godstog har ofte ingen Routes.Stations, men har endestationer i Routes.
+ // Medtag derfor start- og slutstation som opslagskandidater uden at opfinde tider.
+ for(const route of Array.isArray(t.Routes)?t.Routes:[]){
+  const origin=get(route,'OriginStationId','OriginStation','FromStationId');
+  const destination=get(route,'DestinationStationId','DestinationStation','ToStationId');
+  if(origin&&!stops.some(x=>stationKey(x.station)===stationKey(origin)))
+   stops.unshift({station:origin,arrival:null,departure:null,estimated:null,cancelled:false});
+  if(destination&&!stops.some(x=>stationKey(x.station)===stationKey(destination)))
+   stops.push({station:destination,arrival:null,departure:null,estimated:null,cancelled:false});
+ }
+ // Tilføj eller berig den valgte station fra den aktuelle stationsbesked.
+ const current=stationCode();
+ if(current){
+  const local={station:current,
+   arrival:get(t,'ScheduleTimeArrival','ScheduledArrivalTime'),
+   departure:get(t,'ScheduleTimeDeparture','ScheduledDepartureTime'),
+   estimated:get(t,'EstimatedTimeArrival','EstimatedTimeDeparture'),
+   cancelled:false,cancelledArrival:t.IsCancelledArrival===true,cancelledDeparture:t.IsCancelledDeparture===true,
+   actualArrival:get(t,'TrainArrived'),actualDeparture:get(t,'TrainDeparted')};
+  const matching=stops.filter(x=>stationKey(x.station)===current);
+  if(matching.length){for(const x of matching){if(!x.arrival)x.arrival=local.arrival;if(!x.departure)x.departure=local.departure;if(!x.estimated)x.estimated=local.estimated;x.cancelledArrival=local.cancelledArrival;x.cancelledDeparture=local.cancelledDeparture;x.actualArrival=local.actualArrival;x.actualDeparture=local.actualDeparture}}
+  else if(local.arrival||local.departure||local.estimated){
+   const when=local.arrival||local.departure||local.estimated;
+   const millis=v=>{const d=parseDate(v);return d&&d.getFullYear()>2000?d.getTime():Infinity};
+   const routes=Array.isArray(t.Routes)?t.Routes:[];
+   const origin=routes.some(r=>String(r?.OriginStationId||'').toUpperCase()===current);
+   const destination=routes.some(r=>String(r?.DestinationStationId||'').toUpperCase()===current);
+   if(origin)stops.unshift(local);
+   else if(destination)stops.push(local);
+   else {const at=stops.findIndex(x=>millis(x.arrival||x.departure||x.estimated)>millis(when));if(at<0)stops.push(local);else stops.splice(at,0,local)}
+  }
+ }
+ // Behold udenlandske stationer som rutepunkter, men vis aldrig tider for dem.
+ // Rækkefølge: udgangsstation, danske stop i rutedata/tidsrækkefølge, endestation.
+ const routeList=Array.isArray(t.Routes)?t.Routes:[];
+ const firstOrigin=routeList.length?String(routeList[0].OriginStationId||'').toUpperCase():'';
+ const lastDestination=routeList.length?String(routeList[routeList.length-1].DestinationStationId||'').toUpperCase():'';
+ const stationId=x=>String(x.station||'').toUpperCase();
+ const routeTime=x=>{const d=parseDate(x.arrival||x.departure||x.estimated);return d&&d.getFullYear()>2000?d.getTime():Infinity};
+ const indexedStops=stops.map((x,i)=>({x,i}));
+ indexedStops.sort((a,b)=>{
+  const rank=x=>stationId(x)===firstOrigin?0:stationId(x)===lastDestination?2:1;
+  const ra=rank(a.x),rb=rank(b.x);
+  if(ra!==rb)return ra-rb;
+  if(ra===1){const ta=routeTime(a.x),tb=routeTime(b.x);if(Number.isFinite(ta)&&Number.isFinite(tb)&&ta!==tb)return ta-tb;}
+  return a.i-b.i;
+ });
+ stops.splice(0,stops.length,...indexedStops.map(e=>e.x));
+ // Fjern kun fuldstændigt ens stop; bevar ruteorden.
+ const unique=[...new Map(stops.map(x=>[JSON.stringify(x),x])).values()];
+ currentTrainDiagnostics.stops=unique;updateTrainDiagnostics();
+ if(unique.length){
+  const wrap=document.createElement('div');wrap.style.overflowX='auto';
+  const table=document.createElement('table');table.className='schedule-table';
+  const head=document.createElement('thead'),hr=document.createElement('tr');
+  for(const label of ['Station','Ankomst','Afgang','Forventet']){const th=document.createElement('th');th.textContent=label;hr.append(th)}
+  head.append(hr);table.append(head);const tbody=document.createElement('tbody');
+  for(const stop of unique){
+   const tr=document.createElement('tr');
+   const stationName=stationsByCode.get(stationKey(stop.station))||stop.station;
+   const foreign=/^[&%]/.test(stationKey(stop.station));
+   const values=[stationName,foreign?'':stop.arrival&&!isZeroClock(stop.arrival)?displayScheduled(stop.arrival):'',foreign?'':stop.departure&&!isZeroClock(stop.departure)?displayScheduled(stop.departure):'',foreign?'':stop.estimated&&!isZeroClock(stop.estimated)?fmtTime(stop.estimated):''];
+   if(!foreign&&stop.cancelledArrival)values[1]='Aflyst';
+   if(!foreign&&stop.cancelledDeparture)values[2]='Aflyst';
+   if(!foreign&&stop.cancelled&&!stop.cancelledArrival&&!stop.cancelledDeparture){tr.style.color='#fb7185';if(!values[3])values[3]='Aflyst'}
+   if(!foreign&&(stop.cancelledArrival||stop.cancelledDeparture))tr.style.color='#fb7185';
+   if(stationKey(stop.station)===current)tr.style.fontWeight='bold';
+   for(const v of values){const td=document.createElement('td');td.textContent=v;tr.append(td)}stop.row=tr;tbody.append(tr);
+  }
+  table.append(tbody);wrap.append(table);body.append(wrap);enrichScheduleStops(unique,t,body,requestId).catch(console.error);
+ }else{
+  const msg=document.createElement('p');msg.className='schedule-note';
+  msg.textContent='MitTog leverer ingen stopliste for dette tog i den aktuelle stationsbesked.';body.append(msg);
+ }
+ dlg.showModal();
+}
+$('closeSchedule').addEventListener('click',()=>{scheduleRequestId++;$('scheduleDialog').close()});
+function render(){
+ // Sammenlæg udelukkende de seneste snapshots fra aktive forbindelser.
+ // Prioriter afgangs-/ankomstdata over sporpositioner ved samme tog.
+ const merged=new Map();
+ const names=[...state.snapshots.keys()].sort((a,b)=>
+   (a.startsWith('Spor')?0:a==='Ankomster'?1:2)-(b.startsWith('Spor')?0:b==='Ankomster'?1:2));
+ for(const name of names){for(const [key,t] of state.snapshots.get(name)){
+   const previous=merged.get(key);
+   merged.set(key,previous?{...previous,...Object.fromEntries(Object.entries(t).filter(([,v])=>v!==null&&v!==undefined&&v!==''))}:t);
+ }}
+ const now=Date.now();
+ const shown=[...merged.values()].filter(t=>!isAlreadyGone(t,now));
+ shown.sort((a,b)=>sortTime(a)-sortTime(b)||String(val(a,'PublicTrainId','TrainId')||'').localeCompare(String(val(b,'PublicTrainId','TrainId')||''),'da',{numeric:true}));
+
+ const tbody=$('rows');tbody.replaceChildren();
+ for(const t of shown){
+  const r=reasons(t),tr=document.createElement('tr');
+  const typ=val(t,'TrainType','trainType','serviceType');
+  if(typ&&typ!=='Passenger')tr.className='nonpass';else if(r.length)tr.className='flag';
+  const track=val(t,'TrackCurrent','Track','track')||'–';
+  addCell(tr,track);
+  const number=val(t,'PublicTrainId','TrainId','number','id')||'–';
+  const code=val(t,'Product','product')||'';
+  const trainCell=addCell(tr,'');
+  const trainButton=document.createElement('button');trainButton.type='button';trainButton.className='train-link';
+  trainButton.textContent=(code?code+' ':'')+number;
+  trainButton.title='Vis togets tilgængelige køreplan';
+  trainButton.addEventListener('click',()=>showTrainSchedule(t));
+  trainCell.append(trainButton);
+  const operatorName=operatorOf(t);
+  tr.style.setProperty('--operator-row',operatorRowColors[operatorName]||'#182437');
+  addOperatorCell(tr,t);
+
+  addCell(tr,routeOf(t),'route');
+  addCell(tr,displayScheduled(val(t,'ScheduleTimeArrival')));
+  const departure=departureDisplay(t);
+  addCell(tr,departure,departure==='Aflyst'?'cancelled':undefined);
+  addCell(tr,estimatedOf(t),'late');
+  tbody.append(tr);
+ }
+}
+function renderStatus(){
+ const statuses=[...state.status.values()];
+ const active=statuses.filter(x=>x.status==='OPEN').length;
+ const errors=statuses.filter(x=>x.status==='FEJL').length;
+ $('status').textContent=active ? `Live · ${active} forbindelser aktive` : errors ? 'Forbindelsesfejl – prøv igen' : 'Forbinder…';
+ $('status').className=active?'live':errors?'error':'waiting';
+}
+function setStatus(name,status,count=0,note=''){state.status.set(name,{status,count,note});renderStatus()}
+function disconnect(){for(const ws of state.sockets.values()){ws.onclose=null;ws.close()}state.sockets.clear();state.snapshots.clear()}
+function connectOne(name,url){setStatus(name,'FORBINDER');let ws;try{ws=new WebSocket(url)}catch(e){setStatus(name,'FEJL',0,e.message);return}state.sockets.set(name,ws);ws.onopen=()=>setStatus(name,'OPEN',0,'venter på data');ws.onmessage=e=>{try{const obj=JSON.parse(e.data);const ok=ingest(obj,name);const count=obj?.data?.Trains?.length??obj?.Trains?.length??0;setStatus(name,'OPEN',count,ok?'data modtaget':'besked uden Trains')}catch(err){setStatus(name,'FEJL',0,err.message)}};ws.onerror=()=>setStatus(name,'FEJL',0,'WebSocket-fejl');ws.onclose=e=>{state.snapshots.delete(name);render();setStatus(name,'LUKKET',0,'kode '+e.code)}}
+const stationList=[["Aalborg","AB"],["Aalborg Lufthavn ✈︎","ABL"],["Aalborg Vestby","ABV"],["Arden","AD"],["Alken","AK"],["Aarup","AP"],["Aarhus H","AR"],["Baunhøj","BAH"],["Brande","BB"],["Bred","BD"],["Brejning","BET"],["Bording","BG"],["Birk Centerpark","BIC"],["Billum","BIM"],["Bjerringbro","BJ"],["Børkop","BK"],["Brønderslev","BL"],["Bramming","BM"],["Bedsted Thy","BN"],["Borup","BO"],["Boulevarden","BOT"],["Brørup","BP"],["Brøns","BRR"],["Borris","BS"],["Bur","BU"],["Bunken","BUK"],["Bredebro","BW"],["CPH Lufthavn ✈︎","CPH"],["Døstrup Sønderjylland","DS"],["Dyreby","DY"],["Ejby","EB"],["Eskilstrup","EK"],["Emmersbæk","EMM"],["Esbjerg","ES"],["Spangsbjerg","ESN"],["Engesvang","EV"],["Fredericia","FA"],["Frederikshavn","FH"],["Frederikshavnsvej","FHV"],["Fruens Bøge","FRS"],["Frisvadvej","FRT"],["Gelsted","GD"],["Gjesing","GJE"],["Gødstrup","GP"],["Gredstedbro","GS"],["Gråsten","GST"],["Gadstrup","GT"],["Guldager","GU"],["Give","GW"],["Glumsø","GZ"],["Espergærde","GÆ"],["Gørding","GØ"],["Gårde","GÅ"],["Hadsten","HA"],["Hobro","HB"],["Havdrup","HD"],["Hee","HE"],["Hedensted","HED"],["Herfølge","HF"],["Helsingør","HG"],["Herregårdsparken","HGP"],["Hedehusene","HH"],["Hirtshals","HHS"],["Hjørring","HJ"],["Hjallese","HJS"],["Hjørring Øst","HJØ"],["Holbæk","HK"],["Hellerup","HL"],["Hjerm","HM"],["Hinnerup","HN"],["Henne","HNN"],["Holstebro","HO"],["Horne","HON"],["Holmstrup","HP"],["Holsted","HQ"],["Herning","HR"],["Herning Messecenter","HRM"],["Horsens","HS"],["Høje Taastrup","HTÅ"],["Hammerum","HU"],["Hulsig","HUL"],["Humlebæk","HUM"],["Hvalsø","HV"],["Hvidbjerg","HW"],["Hørning","HX"],["Hyllerslev","HYV"],["Haslev","HZ"],["Hørdum","HÆ"],["Højslev","HØ"],["Højby (Fyn)","HØS"],["Vildbjerg","ID"],["Ikast","IK"],["Sig","IS"],["Janderup","JAD"],["Jegum","JEG"],["Jerup","JEU"],["Jelling","JL"],["Jerne","JNE"],["Jyderup","JY"],["Kauslunde","KA"],["Kalundborg","KB"],["Kalundborg Øst","KBØ"],["Kolding","KD"],["København H","KH"],["Køge","KJ"],["Køge Nord","KJN"],["Østerport","KK"],["Klampenborg","KL"],["Nørreport","KN"],["Knabstrup","KS"],["Kvægtorvet","KT"],["Kvissel","KV"],["Kværndrup","KVS"],["Kliplev","KW"],["Kibæk","KÆ"],["Korsør","KØ"],["Laven","LA"],["Langå","LG"],["Lilleheden","LHE"],["Lindholm","LIH"],["Lejre","LJ"],["Lunderskov","LK"],["Lem","LM"],["Lyngs","LN"],["Lundby","LU"],["Lunde","LUJ"],["Langeskov","LV"],["Lille Skensved","LW"],["Løftgård","LØT"],["Middelfart","MD"],["Mørkøv","MØ"],["Nørre Aaby","NA"],["Napstjert","NAP"],["Nørre Nebel","NBL"],["København Syd","NEL"],["Nykøbing F","NF"],["Nyborg","NG"],["Nivå","NI"],["Oddesund Nord","NO"],["Nørre Alslev","NV"],["Næstved","NÆ"],["Næstved Nord","NÆN"],["Odense","OD"],["Skalborg","OG"],["Orehoved","OH"],["Vojens","OJ"],["Kokkedal","OK"],["Oksbøl","OKS"],["Holme-Olstrup","OL"],["Odense Sygehus","OSS"],["Outrup","OVT"],["Padborg","PA"],["Pederstrup","PDS"],["Vipperød","PE"],["Ribe","RB"],["Ribe Nørremark","RBN"],["Randers","RD"],["Ringe","RE"],["Rejsby","REJ"],["Rødby Færge","RF"],["Ringsted","RG"],["Sjørring","RI"],["Rimmen","RIM"],["Ringkøbing","RJ"],["Rødkærsbro","RK"],["Roskilde","RO"],["Roskilde Festivalplads","ROF"],["Rødekro","RQ"],["Regstrup","RT"],["Rungsted Kyst","RU"],["Rudme","RUS"],["Ry","RY"],["Sindal","SA"],["Skalbjerg","SC"],["Skanderborg","SD"],["Sønderborg","SDB"],["Svebølle","SE"],["Sejstrup","SEJ"],["Slagelse","SG"],["Skagen","SGB"],["Stenstrup Syd","SIS"],["Skjern","SJ"],["Skive","SK"],["Silkeborg","SL"],["Stoholm","SM"],["Svenstrup J","SN"],["Snedsted","SNE"],["Sorø","SO"],["Sparkær","SP"],["Snekkersten","SQ"],["Støvring","SR"],["Strandby","STB"],["Struer","STR"],["Stenstrup","STS"],["Studsgård","STU"],["Svejbæk","SV"],["Svendborg","SVG"],["Svendborg Vest","SVV"],["Skørping","SØ"],["Skodsborg","SÅ"],["Tarm","TA"],["Tjæreborg","TB"],["Troldhede","TD"],["Tønder","TDR"],["Tinglev","TE"],["Teglgårdsvej","TGV"],["Tureby","TH"],["Thisted","TI"],["Taulov","TL"],["Tim","TM"],["Tornby","TNB"],["Tolne","TO"],["Tommerup","TP"],["Tistrup","TR"],["Trekroner","TRK"],["Tønder Nord","TRN"],["Thyregod","TY"],["Tølløse","TØ"],["Tårnby","TÅT"],["Ulfborg","UF"],["Uglev","UL"],["Humlum","UM"],["Ulstrup","UP"],["Hurup Thy","UR"],["Aulum","UU"],["Varde","VA"],["Valby","VAL"],["Varde Vest","VAV"],["Vedbæk","VB"],["Hviding","VD"],["Vemb","VEM"],["Viborg","VG"],["Viby Jylland","VI"],["Vidstrup","VID"],["Visby","VIS"],["Vejle","VJ"],["Vejle Sygehus","VJS"],["Varde kaserne","VKA"],["Vellingshøj","VLH"],["Vamdrup","VM"],["Vejen","VN"],["Varde Nord","VNO"],["Vordingborg","VO"],["Vinderup","VP"],["Vrå","VR"],["Vrøgum","VRØ"],["Viby Sj","VY"],["Ydby","YD"],["Skærbæk","ÆK"],["Ølgod","ØG"],["Ølby","ØLB"],["Ørestad","ØRE"],["Ålbæk","ÅLB"],["Årslev","ÅS"],["Amstrup","AMT"],["Armose","ARM"],["Asnæs","ASN"],["Assedrup","ASS"],["Avnede","AVD"],["Skolebakken","BAK"],["Balleby","BAT"],["Beder","BED"],["Bækmarksbro","BKM"],["Bagmarken","BMT"],["Bonnet","BNT"],["Brede","BRE"],["Brødeskov","BSK"],["Dianalund","DIA"],["Dronningmølle","DRM"],["Dyssekilde","DSK"],["Duemose","DUG"],["Egelund","EG"],["Egøje","EGØ"],["Elkærdam","EL"],["Europaplads","EU"],["Fredensborg","FD"],["Fuglevad","FGV"],["Firhøj","FIR"],["Fjellenstrup","FJG"],["Fåre","FRE"],["Frederiksværk","FRV"],["Fårevejle","FVJ"],["Faxe Ladeplads","FXL"],["Faxe Syd","FXS"],["Gunnar Clausensvej","GCT"],["Godhavn","GHG"],["Gilleleje","GLL"],["Gilleleje Øst","GLØ"],["Grenaa","GR"],["Grænge","GRG"],["Grubberholm","GRH"],["Græsted Syd","GRS"],["Grønholt","GRT"],["Grevinge","GRV"],["Græsted","GRÆ"],["Grønnehave","GRØ"],["Grimstrup","GSF"],["Gislinge","GSL"],["Gribsø","GØG"],["Gørløse","GØR"],["Højby Sj","HBS"],["Harboøre","HBØ"],["Havrebjerg","HEB"],["Hellebæk","HEL"],["Ny Hagested","HGT"],["Hanehoved","HHF"],["Hillerød","HI"],["Helsinge","HLG"],["Himlingøje","HMØ"],["Hornbæk","HNK"],["Holløse","HOG"],["Hårlev","HRL"],["Horneby Sand","HSA"],["Hesselmed","HST"],["Hjortshøj","HT"],["Hundested Havn","HUH"],["Hundested","HUN"],["Hørve","HVE"],["Højstrup","HØP"],["Karinebæk","KAB"],["Kirke Eskilstrup","KEK"],["Kagerup","KGG"],["Kongsvang","KGV"],["Kildekrog","KIL"],["Klinkby","KLI"],["Klippinge","KLP"],["Kolind","KO"],["Kratbjerg","KRB"],["Kregme","KRF"],["Karise","KRI"],["Kvistgård","KÅ"],["Løve","LE"],["Lille Linde","LLI"],["Lille Kregme","LLK"],["Lemvig","LMV"],["Lystrup","LP"],["Hovmarken","LPT"],["Langerød","LRT"],["Løgten","LT"],["Lyngby Lokal","LYL"],["Laugø","LØG"],["Malling","MAL"],["Marienlyst","MAR"],["Melby","MEL"],["Mårum","MMG"],["Mølleparken","MPK"],["Mørke","MR"],["Maribo","MRB"],["Mårslet","MST"],["Mørdrup","MØT"],["Mårsø","MÅ"],["Nr. Asmindrup","NAM"],["Nyled","NDT"],["Nejrup","NET"],["Nykøbing Sjælland","NKS"],["Nakskov","NSK"],["Nyrup","NYP"],["Nærum","NÆR"],["Nørgårdsvej","NØV"],["Odder","ODD"],["Hornslet","OS"],["Den Permanente","PER"],["Pårup","PPG"],["Parkvej","PV"],["Ramme","RAM"],["Rødvig","RDG"],["Rosenhøj","RH"],["Rude Havvej","RUH"],["Ruds Vedby","RUV"],["Ravnholm","RVH"],["Ryde","RYD"],["Rønland","RØN"],["Ryomgård","RÅ"],["Saltrup","SAG"],["Saunte","SAU"],["Sønderby","SDBY"],["Stenhus","SHT"],["Sinkbæk","SIT"],["Skibstrup","SKB"],["Skellebjerg","SKL"],["Skævinge","SKV"],["Sommerland Sjælland","SLT"],["Store-Merløse","SMS"],["Svinninge","SNG"],["Slotspavillonen","SPG"],["Strande","STA"],["Store-Heddinge","STH"],["Stenlille","STL"],["Stæremosen","STÆ"],["Sakskøbing","SX"],["Søborg","SØB"],["Søllested","SØL"],["Tønder Grænse","TDGR"],["Thyborøn Havn","THB"],["Sprogøvej","THS"],["Thyborøn Kirke","THT"],["Tokkerup","TOK"],["Torsøvej","TOV"],["Tranbjerg","TRG"],["Trustrup","TU"],["Tisvildeleje","TVL"],["Varpelev","VAP"],["Vedde","VED"],["Vejby","VEJ"],["Vilhelmsborg","VH"],["Victoria Street Station","VIC"],["Vibehus","VIF"],["Vig","VIG"],["Vallø","VLØ"],["Vrist","VRI"],["Vestre Strandalle","VSA"],["Ørby","ØBG"],["Skødstrup","ØDS"],["Øllegårdsvej","ØGT"],["Ølsted","ØLS"],["Høng","ØN"],["Ørholm","ØRH"],["Østbanetorvet","ØS"],["Østerbjerg","ØSF"],["Øster Toreby","ØTO"],["Ålsgårde","AAL"],["Bad Bentheim","&BTH"],["Bad Oldesloe","&AO"],["Bad Schandau","&DSA"],["Bad Schwartau","&ASCH"],["Basel Bad Bf","&BAD"],["Bebra","&BEB"],["Berlin","&BLN"],["Berlin Gesundbrunnen","&BGS"],["Berlin Hbf","&BHBF"],["Berlin Hbf","&BLS"],["Berlin HBF (Tief)","&BL"],["Berlin Ostbahnhof","&BHF"],["Berlin Südkreuz","&BPAF"],["Berlin Zoologischer Garten","&BZOO"],["Berlin-Charlottenburg","&BCHB"],["Berlin-Lichtenberg","&BLO"],["Berlin-Rummelsburg","&BRGBT"],["Berlin-Spandau","&BSPD"],["Bielefeld","&BIE"],["Bochum","&BCH"],["Bonn","&KBO"],["Burg (Fehmarn) West","&ABUW"],["Bützow","&BTZ"],["Chemnitz Hbf","&DC"],["Dortmund","&DMD"],["Dresden","&DRD"],["Dresden Hbf","&DH"],["Dresden Neustadt","&DN"],["Duisburg","&DUB"],["Düsseldorf","&DDF"],["Düsseldorf Hbf","&KDÜ"],["Elmshorn","&AEL"],["Emmerich","&EEM"],["Essen","&ESS"],["Essen Hbf","&EE"],["Fehmarn-Burg","&ABUF"],["Flensburg","&FLB"],["Flensburg Weiche","&AFW"],["Frankfurt","&FFM"],["Freiburg (Breisgau) Hbf","&RF"],["Fulda","&FUL"],["Großenbrode","&AGRO"],["Hagen","&HAG"],["Hamburg Hbf","&AH"],["Hamburg Hbf","&HMB"],["Hamburg Hbf ZOB","&AH_Z"],["Hamburg Langenfelde Bbf","&ALA"],["Hamburg-Altona","&AA"],["Hamburg-Bergedorf","&BG"],["Hamburg-Dammtor","&ADF"],["Hamburg-Eidelstedt Ef","&AE_F"],["Hamburg-Harburg","&AHAR"],["Hamm","&HAM"],["Hannover","&HAN"],["Harrislee","&AHAL"],["Karlsruhe Hbf","&RKH"],["Kiel","&KIEL"],["Kiel Hbf","&AK"],["Köln","&KLN"],["Ludwigslust","&WL"],["Lübeck Hbf","&ALY"],["Lübeck-Travemünde Hafen","&ALTH"],["Mannheim Hbf","&RM"],["Maschen","&MAS"],["München","&MYN"],["München Hbf","&MH"],["München Ost","&MUO"],["München Ostbahnhof     ","&MOP"],["Neumünster","&AN"],["Neumünster","&NEU"],["Niebüll","&ANB"],["Nortorf","&ANF"],["Offenburg","&ROD"],["Oldenburg","&OLD"],["Osnabrück","&OSN"],["Pinneberg","&AP"],["Puttgarden","&PU"],["Puttgarden Portal","&PUP"],["RBF Maschen","&AM"],["Rendsburg","&AR"],["Rosenheim","&MRO"],["Rostock","&RHO"],["Schleswig","&ASW"],["Solingen-Ohligs","&SOH"],["Starnberg","&MST"],["Stuttgart","&TST"],["Süderlügum","&SDL"],["Uphusum","&AUP"],["Waltershof","&WAL"],["Warnemünde","&WY"],["Wittenberge","&WW"],["Wuppertal","&WPT"],["Würzburg Hbf","&NWH"],["Aachen","&AAC"],["Agnesberg","%AGB"],["Aleholm","%AHM"],["Algutsgården","%AGG"],["Alingsås","%A"],["Almedal","%AM"],["Alnabru","%ALN"],["Alvesta","%AV"],["Alvhem","%ALH"],["Aneby","%ANY"],["Anneberg","%AG"],["Annedal","%AAL"],["Aplared","%APD"],["Arboga","%ARB"],["Arlöv","%AL"],["Aspedalen","%ASD"],["Aspen","%APN"],["Assberg","%ASB"],["Attarp","%ATP"],["Ballingslöv","%BL"],["Bankeryd","%BRY"],["Barkåkra","%BAA"],["Berga","%BG"],["Berghem","%BGM"],["Bergåsa","%BÅA"],["Billeberga","%BIB"],["Billesholm","%BIH"],["Biskopstorp","%BTP"],["Bjurhem","%BJH"],["Bjuv","%BJUV"],["Bjärnum","%BJM"],["Björketorp","%BJO"],["Björköby","%BJY"],["Björnkulla","%BJN"],["Björnlunda","%B"],["Blädinge","%BLD"],["Bodafors","%BDF"],["Bohus","%BHS"],["Bollebygd","%BOY"],["Bor","%BOR"],["Borgstena","%BOA"],["Borås C","%BS"],["Boxholm","%BX"],["Bratteborg","%BTG"],["Bredaryd","%BDY"],["Brinellskolan","%BRIN"],["Brogården","%BGD"],["Bromölla","%BML"],["Bruzaholm","%BZ"],["Bryngenäs","%BGS"],["Bräkne-Hoby","%BHB"],["Brännarp","%BP"],["Bränninge","%BRE"],["Brännögård","%BÖG"],["Brålanda","%BRL"],["Burlöv","%BLV"],["Byarum","%BYM"],["Bäckefors","%BÄF"],["Båstad","%BÅN"],["Båstad","%BÅSÖ"],["Dals Rostock","%DRT"],["Dammstorp","%DAT"],["Degerön","%D"],["Derome","%DRE"],["Dingle","%DL"],["Diö","%DIÖ"],["Diö Södra","%DIS"],["Dkebokvarn","%SKV"],["Dösjebro","%DÖS"],["Dånviken","%DÅN"],["Ed","%ED"],["Ekenässjön","%ESN"],["Ekeryd","%EKY"],["Eksjö","%EK"],["Eldsberga","%EA"],["Emmaboda","%EM"],["Eneryda","%ERA"],["Erikstad","%ERK"],["Eslöv","%E"],["Falkenberg","%FABP"],["Falköping C","%F"],["Finja","%FIN"],["Finnerödja","%FA"],["Fiskeby","%FI"],["Fjälkinge","%FKI"],["Flackarp","%FLP"],["Flemingsberg","%FLB"],["Flen","%FLE"],["Flens övre","%FSÖ"],["Flisby","%FLS"],["Floby","%FBY"],["Floda","%FD"],["Flodala","%FAA"],["Flunbo","%FLU"],["Flädie","%FL"],["Forserum","%FM"],["Forsheda","%FOD"],["Fosieby","%FSB"],["Fredriksdal","%FDL"],["Fredrikslund","%FRE"],["Frillesås","%FÅ"],["Frinnaryd","%FRD"],["Fristad","%FRA"],["Fritsla","%FRL"],["Frufällan","%FFL"],["Frufällan","%FLF"],["Frändefors","%FDF"],["Furet","%FUR"],["Förslöv","%FÖR"],["Fågelsta","%FGL"],["Fållinge","%FÅL"],["Gamlarp","%GMP"],["Gamlestade","%GAS"],["Gantofta","%GAN"],["Garnudden","%GAU"],["Gemla","%GM"],["Genevad","%GND"],["Gistad","%GI"],["Glumslöv","%GLV"],["Gnesta","%GN"],["Gnosjö","%GNÖ"],["Godegård","%GO"],["Grevaryd","%GRD"],["Grevie","%GVE"],["Grimstorp","%GT"],["Grimsås","%GRM"],["Gripenberg","%GP"],["Grästorp","%GOP"],["Gubbero","%GRO"],["Gullberna","%GUA"],["Gunnesbo","%GNB"],["Gärsnäs","%GSS"],["Gävle","%GÄV"],["Göteborg","%G"],["Göteborg","%G_"],["Göteborg Kville","%GK"],["Göteborg Marieholm","%GBM"],["Göteborg Sävenäs","%GSV"],["Gårdsjö","%GDÖ"],["Gåvetorp","%GÅP"],["Habo","%HO"],["Hagalund","%HGL"],["Hallavadet","%HVA"],["Hallsberg","%HALL"],["Hallsberg Pbg","%HPBG"],["Hallsberg Rbg","%HRBG"],["Hallsbergs posten","%HPN"],["Halmstad C","%HD"],["Halmstad C","%H"],["Halmstad Rbg","%HDR"],["Hamra","%HAA"],["Hasslarp","%HLP"],["Heberg","%HE"],["Hellevadsholm","%HLV"],["Helsingborg","%HB"],["Ramlösa","%HBGB"],["Ramlösa","%HGB"],["Ramlösa","%HBS"],["Herrljunga","%HR"],["Herting","%HTI"],["Hestra","%HET"],["Hillared","%HIL"],["Hillerstorp","%HTO"],["Hindås","%HÅS"],["Hjältevad","%HVD"],["Hjärup","%HJP"],["Hok","%HOK"],["Hoks östra","%HOKÖ"],["Hollberget","%HBE"],["Holmsjö","%HMÖ"],["Horred","%HRE"],["Hovmantorp","%HVP"],["Hovslätt","%HVS"],["Huddinge","%HU"],["Hulingsryd","%HUD"],["Hult","%HUL"],["Hultsfred","%HF"],["Huskvarna","%HKA"],["Hyllie","%HIE"],["Hyllstofta","%HYL"],["Häljarp","%HÄP"],["Härryda","%HÄY"],["Hässleholm","%HM"],["Hästveda","%HV"],["Hökön","%HKÖ"],["Hörle","%HRL"],["Höör","%HÖ"],["Håkantorp","%HÅP"],["Ingatorp","%IGT"],["Jakobshyttan","%JHO"],["Jonsered Västra","%JV"],["Jonsered Östra","%J"],["Jordholmen","%JH"],["Järlövsby","%JÄY"],["Järna","%JN"],["Järrestad","%JST"],["Jönköping","%JÖ"],["Jönköping gbg","%JÖGB"],["Kalmar C","%KAC"],["Kalmar S","%KAS"],["Karlberg","%KE"],["Karlshamn","%KH"],["Karlskrona","%CK"],["Karpalund","%KAP"],["Katrineholm C","%K"],["Kattarp","%KA"],["Killeberg","%KR"],["Kimstad","%KMS"],["Kinna","%KIN"],["Kinnared","%KID"],["Kistinge","%KST"],["Klevshult","%KVH"],["Klippan","%KL"],["Knalleland","%KNL"],["Knäred","%KNÄ"],["Kode","%KDE"],["Kolke","%KOE"],["Komsjö-gränsen","%KO"],["Kragenäs","%KGS"],["Kristianstad","%CR"],["Kristianstad Gbg","%CRGB"],["Kristianstad Gbg","%CRBG"],["Krökesbo","%KRÖB"],["Kungsbacka","%KB"],["Kungsbacka Hede","%KHE"],["Kvidinge","%KVI"],["Källeryd","%KÄ"],["Kärda","%KÄD"],["Kärreberga","%KÄB"],["Kävlinge","%KG"],["Köping","%KP"],["Köpingebro","%KÖ"],["Köpmannebro","%KPM"],["Kågeröd","%KD"],["Kållered","%KRD"],["Laholm","%LAOV"],["Lammhult","%LH"],["Landeryd","%LRD"],["Landskrona","%LKÖ"],["Laxå","%LÅ"],["Ledsgård","%LGD"],["Lekarekulle","%LEK"],["Lemmeströ","%LMM"],["Lernacken","%LNK"],["Lerum","%LR"],["Lessebo","%LO"],["Lidnäs","%LNS"],["Lillaryd","%LIA"],["Limmared","%LME"],["Lindalen","%LLN"],["Lindekullen","%LKN"],["Lindome","%LDO"],["Linghem","%LGM"],["Lingvallen","%LIV"],["Linköping","%LP"],["Liseberg","%LIS"],["Ljung","%LJU"],["Ljungskile","%LJ"],["Lockarp","%LRP"],["Lund C","%LU"],["Lundavägen","%LDV"],["Lunnarp","%LUP"],["Lödöse Södra","%LES"],["Lönneberga","%LÖN"],["Malmbäck","%MBÄ"],["Malmsjö","%MSL"],["Malmö C","%M_"],["Malmö C","%M"],["Malmö C","%MC"],["Malmö C","%MCE"],["Malmö Gbg","%MGB"],["Malmö Persborg","%MPB"],["Malmö Östervärn","%ÖVN"],["Mantorp","%MT"],["Maria","%MIA"],["Mariannelund","%MND"],["Mariedamm","%MDM"],["Markaryd","%MRD"],["Mellby","%MLB"],["Mellerud","%ML"],["Mjölby","%MY"],["Moheda","%MO"],["Moholm","%MH"],["Mollaryd","%MOY"],["Mon","%MON"],["Mosselund","%MUD"],["Motala","%MOT"],["Mullsjö","%MU"],["Munkedal","%MKL"],["Mölnbo","%MÖ"],["Mölndal","%MDN"],["Mölndal","%MDÖ"],["Mölnlycke","%MYK"],["Mörarp","%MÖR"],["Mörlunda","%MÖA"],["Mörrum","%MRU"],["Målilla","%MÅA"],["Månsarp","%MÅP"],["Nol","%NOL"],["Nordskogen","%NOSK"],["Norrahammar","%NHR"],["Norrköping C","%NR"],["Norsesund","%NS"],["Norsesund Västra","%NDV"],["Norsholm","%NH"],["NULL","%DER"],["NULL","%GÄ"],["NULL","%HEL F"],["NULL","%MAS"],["NULL","%ÖSTP"],["NULL","%R F"],["NULL","%RE F"],["NULL","%SNN"],["Nybro","%NYB"],["Nyckelsjön","%NSJ"],["Nygård","%NYG"],["Nyköping","%NK"],["Nymölla","%NYM"],["Nässjö","%NÄ"],["Nässjö C","%N"],["Nättraby","%NÄT"],["Nödinge","%NÖE"],["Olofström","%OF"],["Olskroken","%OR"],["Ormaryd","%ORY"],["Osby","%O"],["Oskarshamn","%OH"],["Oskarström","%OM"],["Oxie","%OX"],["Partille","%P"],["Perstorp","%PT"],["Påarp","%PÅA"],["Rabbalshede","%RBH"],["Ralingsås","%RAS"],["Ramlösa","%RAM"],["Reftele","%RFT"],["Regumatorp","%RMTP"],["Rocksjön","%RKÖ"],["Ronneby","%RB"],["Rydaholm","%RYM"],["Rydebäck","%RYÄ"],["Rydsgård","%RDG"],["Rynge","%RYE"],["Ryr","%RYR"],["Räppe","%RÄP"],["Rävlanda","%RD"],["Rödberg","%RÖ"],["Rönneshytta","%RH"],["Rönninge","%RÖN"],["Rörstorp","%RÖP"],["Rörvik","%RK"],["Råskogen","%RÅS"],["Saleboda","%SLB"],["Sandared","%SAE"],["Sandbäk","%SAK"],["Sandhem","%SM"],["Sannarp","%SARP"],["Silverdalens bruk","%SID"],["Silverdalens centrum","%SIC"],["Simonstorp","%SMT"],["Simrishamn","%SI"],["Skee","%SKE"],["Skene","%SEE"],["Skeppshult","%SPH"],["Skillingaryd","%SYD"],["Skruv","%SRU"],["Skurup","%SRP"],["Skymossen","%SKMS"],["Skytts Vemmerlöv","%SVÖ"],["Skälebol","%SKBL"],["Skänninge","%SKN"],["Sköldinge","%SDE"],["Skövde C","%SK"],["Smedby","%SDY"],["Smedstorp","%SMP"],["Smålandsstenar","%SDR"],["Solna","%SO"],["Sommen","%SMN"],["Sparreholm","%SP"],["Spjutsbygd","%SPJ"],["Stehag","%SG"],["Stenkullen","%SN"],["Stensjön","%SNÖ"],["Stenstorp","%SS"],["Stenungsund","%SNU"],["Stjärnhov","%SH"],["Stockaryd","%SY"],["Stockholm C","%CST"],["Stockholm Södra","%SST"],["Stolpen","%SOE"],["Stolpslugan","%SPN"],["Stora Höga","%STH"],["Stora Köpinge","%SÖE"],["Strpngsjö","%STÖ"],["Strömstad","%SMD"],["Strömstad gbg","%SGD"],["Stuvsta","%STA"],["Stångby","%STB"],["Surte","%SUE"],["Svaneholm","%SVM"],["Svarte","%STE"],["Svedala","%SEA"],["Svenshögen","%SVG"],["Svågertorp","%STP"],["Säve","%SVE"],["Sävedalen","%SEL"],["Sävenäs","%SÄV"],["Sävenäs","%SÄR"],["Sävenäs rangerbangård","%SÅR"],["Sävsjö","%SÄ"],["Söderby","%SÖDY"],["Södertälje Syd övre","%SÖÖ"],["Sölvesborg","%SÖG"],["Sösdala","%SÖLA"],["Taberg","%TAG"],["Tanum","%TNU"],["Teckomatorp","%TP"],["Tenhult","%TH"],["Tippen","%TIP"],["Tjunnaryd","%TJ"],["Tjörnarp","%TÖ"],["Tofta","%TOF"],["Tomelilla","%TLI"],["Torbacken","%TBN"],["Torebo","%TEO"],["Tornhill","%THL"],["Torpåkra","%TOP"],["Torskors","%TKS"],["Torup","%TOU"],["Tranås","%TNS"],["Trekanten","%TRE"],["Trelleborg","%TRG"],["Triangeln","%TRI"],["Trollhättan","%THN"],["Tullered","%TYE"],["Tullinge","%TUL"],["Tumba","%TU"],["Tunneby","%TUN"],["Tyringe","%TY"],["Tälle","%TÄL"],["Töreboda","%T"],["Tösse","%TÖE"],["Tågarp","%TGP"],["Uddevalla C","%UV"],["Uddevalla östra","%UÖ"],["Ulriksdal","%UDL"],["Ulvstorp","%UTP"],["Upphäred","%UPH"],["Uppsala C","%U"],["Utsikten","%UTS"],["Vaggeryd","%VGD"],["Vallkärra","%VKÄ"],["Vallåkra","%VÅK"],["Vara","%VAA"],["Varberg","%VB"],["Vargön","%VAG"],["Varpemossen","%VPM"],["Vartofta","%VF"],["Veddige","%VDI"],["Vedum","%VED"],["Vegeholm","%VH"],["Vejbyslätt","%VBT"],["Vekerum","%VRU"],["Velanda","%VEA"],["Velanda Söddra","%VEAS"],["Vetlanda","%VTA"],["Viarp","%VIP"],["Vikingestad","%VSD"],["Vimarp","%VIM"],["Vinslöv","%VÖV"],["Viskafors","%VFO"],["Vislanda","%VS"],["Vissefjärda","%VFA"],["Vittsjö","%VSJ"],["Vretstorp","%VT"],["Vällnäs","%VLN"],["Vänersborg","%VG"],["Väring","%VÄ"],["Värnamo","%V"],["Värö","%VRÖ"],["Västerås C","%VÅ"],["Västerås Norra","%VÅN"],["Västra Bodarne","%VBD"],["Västra Torup","%VTO"],["Vätteryd","%VÄD"],["Växjö","%VÖ"],["Vårgårda","%VGÅ"],["Ystad","%Y"],["Ytterby","%YB"],["Älekärr","%ÄLR"],["Älgarås","%ÄL"],["Älmhult","%ÄH"],["Älmhult","%ÄLM"],["Älvsjö","%ÄS"],["Älvsjö godsbangård","%ÄSG"],["Älvängen","%ÄN"],["Äng","%ÄNG"],["Ängelholm","%Ä"],["Ättekulla","%ÄTK"],["Ödåkra","%ÖDA"],["Önaskogen","%ÖNA"],["Önnestad","%ÖND"],["Örebro C","%ÖR"],["Öresund Midt","%ÖRM"],["Örsjö","%ÖRS"],["Örtofta","%Ö"],["Östansjö","%ÖJ"],["Överby","%ÖVB"],["Öxnered","%ÖX"],["Åby","%ÅBY"],["Åkarp","%ÅK"],["Åkarps N","%ÅKN"],["Åmål","%ÅL"],["Ångsågsmossen","%ÅMN"],["Ånimskog","%ÅNM"],["Årstaberg","%ÅBE"],["Åryd","%ÅRD"],["Åsa","%ÅSA"],["Åsbro","%Å"],["Åsensbruk","%ÅB"],["Åstorp","%ÅP"],["Södertälje Hamn","%SÖD"],["Södertälje Syd undre","%SÖU"],["Nässjö central","%N"],["Bischofshofen","£BO"],["St. Johann in Tirol","£JTI"],["Kitzbühel","£KZB"],["Lend","£LD"],["Saalfelden","£SAA"],["Salzburg Hbf","£SB"],["Schwarzach - St Veit","£SWA"],["Wörgl Hbf","£W"],["Zell Am See","£Z"],["Innsbruck Hbf","£I"],["Bad Gastein","£BAG"],["Jenbach","£JB"],["Kirchberg in Tirol","£KIT"],["St.Johann im Pongau","£JP"],["Prag","#PHA"],["Praha-Holesovice","#THE"],["Usti nad Labem","#UNL"],["Decín HL.N","#TDN"],["Praha HL.N","#PH"],["Albertslund","ALB"],["Vangede","ANG"],["Avedøre","AVØ"],["Ballerup","BA"],["Bagsværd","BAV"],["Bernstorffsvej","BFT"],["Birkerød","BI"],["Bispebjerg","BIT"],["Brøndby Strand","BSA"],["Buddinge","BUD"],["Brøndbyøster","BØT"],["Carlsberg","CB"],["Charlottenlund","CH"],["Danshøj","DAH"],["Dybbølsbro","DBT"],["Dyssegård","DYT"],["Egedal","EGD"],["Emdrup","EMT"],["Flintholm","FL"],["Farum","FM"],["Friheden","FRH"],["Frederikssund","FS"],["Fuglebakken","FUT"],["Favrholm","FVT"],["Grøndal","GHT"],["Gentofte","GJ"],["Glostrup","GL"],["Greve","GRE"],["Hareskov","HAR"],["Herlev","HER"],["Hvidovre","HIT"],["Holte","HOT"],["Husum","HUT"],["Ishøj","IH"],["Islev","IST"],["Jersie","JSI"],["Jyllingevej","JYT"],["Jægersborg","JÆT"],["KB Hallen","KBN"],["Kildebakke","KET"],["Kildedal","KID"],["Karlslunde","KLU"],["Allerød","LI"],["Lyngby","LY"],["Malmparken","MPT"],["Måløv","MW"],["Nordhavn","NHT"],["Nørrebro","NØ"],["Ordrup","OP"],["Peter Bangs Vej","PBT"],["Rødovre","RDO"],["Ryparken","RYT"],["Svanemøllen","SAM"],["Sorgenfri","SFT"],["Stengården","SGT"],["Sjælør","SJÆ"],["Skovlunde","SKO"],["Skovbrynet","SKT"],["Solrød Strand","SOL"],["Stenløse","ST"],["Sydhavn","SYV"],["Taastrup","TÅ"],["Hundige","UND"],["Vanløse","VAN"],["Langgade","VAT"],["Vigerslev Allé","VGT"],["Virum","VIR"],["Vallensbæk","VLB"],["Vinge","VNG"],["Vesterport","VPT"],["Veksø","VS"],["Værløse","VÆR"],["Ølstykke","ØL"],["Ålholm","ÅLM"],["Åmarken","ÅM"],["Høvelte","HØV"],["Vejbæk","VK"],["Sommersted","SST"],["Farris","FZ"],["Fjenneslev","FJ"]];
+// Banedanmarks BTR-strækningsregister har tekniske stationer, der ikke findes i MitTogs stationsliste.
+// Disse koder er verificeret i registeret. Det fulde register kan indlæses fra HTML nedenfor.
+stationList.push(["Skibbild","IB"],["Kværkeby","KY"],["Hvidovre Fjern","HIF"],["Fjenneslev","FJ"],["Forlev","FO"],["Sprogø","SPR"],["Lellinge","LEL"],["Bjæverskov","BJS"],["Adamshøj","ADA"]);
+const normalizeStation=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/Æ/gi,'AE').replace(/Ø/gi,'OE').replace(/Å/gi,'AA').replace(/[^A-Z0-9]/gi,'').toUpperCase();
+const stationsByName=new Map(),stationsByCode=new Map(), stationKeys=new Set();
+const datalist=document.getElementById('stationer');
+function addStation(name,code){
+ name=String(name||'').trim();code=String(code||'').trim().toUpperCase();
+ if(!name||!code||code.includes('-')||code.length>9||name.toLowerCase()==='null')return false;
+ const key=normalizeStation(name)+'|'+code;if(stationKeys.has(key))return false;
+ stationKeys.add(key);stationsByName.set(normalizeStation(name),code);
+ if(!stationsByCode.has(code))stationsByCode.set(code,name);
+ const option=document.createElement('option');option.value=name;option.label=code;datalist.appendChild(option);return true;
+}
+for(const [name,code] of stationList)addStation(name,code);
+stationsByName.set('RIBENOERREMARK','RBN');stationsByName.set('RIBENORREMARK','RBN');stationsByCode.set('RBN','Ribe Nørremark');
+// Banedanmarks strækningsregister, 28. oktober 2026, indbygget direkte fra Excel.
+const btrStations=[{"name":"København H","code":"KH","type":"Station"},{"name":"Valby","code":"VAL","type":"Trinbræt"},{"name":"Hvidovre Fjern","code":"HIF","type":"Teknisk Station"},{"name":"Glostrup","code":"GL","type":"Station"},{"name":"Høje Taastrup","code":"HTÅ","type":"Station"},{"name":"Høje Taastrup kombiterminal","code":"HTÅS","type":"Kombiterminal"},{"name":"Hedehusene","code":"HH","type":"Trinbræt"},{"name":"Trekroner","code":"TRK","type":"Trinbræt"},{"name":"Roskilde","code":"RO","type":"Station"},{"name":"Viby Sjælland","code":"VY","type":"Station"},{"name":"Borup","code":"BO","type":"Station"},{"name":"Kværkeby","code":"KY","type":"Teknisk Station"},{"name":"Ringsted","code":"RG","type":"Station"},{"name":"Fjenneslev","code":"FJ","type":"Teknisk Station"},{"name":"Sorø","code":"SO","type":"Station"},{"name":"Slagelse","code":"SG","type":"Station"},{"name":"Forlev","code":"FO","type":"Teknisk Station"},{"name":"Korsør","code":"KØ","type":"Station"},{"name":"Sprogø","code":"SPR","type":"Teknisk Station"},{"name":"Nyborg","code":"NG","type":"Station"},{"name":"Avedøre Havnevej","code":"AVH","type":"Teknisk Station"},{"name":"Kildebrønde","code":"KIB","type":"Teknisk Station"},{"name":"Jersie Fjern","code":"JSF","type":"Teknisk Station"},{"name":"Køge Nord","code":"KJN","type":"Station"},{"name":"Lellinge","code":"LEL","type":"Teknisk Station"},{"name":"Bjæverskov","code":"BJS","type":"Teknisk Station"},{"name":"Adamshøj","code":"ADA","type":"Teknisk Station"},{"name":"Glumsø","code":"GZ","type":"Trinbræt"},{"name":"Næstved","code":"NÆ","type":"Station"},{"name":"Mogenstrup","code":"MOG","type":"Teknisk Station"},{"name":"Lundby","code":"LU","type":"Station"},{"name":"Vordingborg","code":"VO","type":"Station"},{"name":"Masnedø","code":"MN","type":"Teknisk Station"},{"name":"Orehoved","code":"OH","type":"Teknisk Station"},{"name":"Nørre Alslev","code":"NV","type":"Trinbræt"},{"name":"Eskilstrup","code":"EK","type":"Station"},{"name":"Nykøbing Falster","code":"NF","type":"Station"},{"name":"Nykøbing Falster Vest","code":"NFV","type":"Teknisk Station"},{"name":"Lolland Midt","code":"LLM","type":"Teknisk Station"},{"name":"Holeby","code":"HBY","type":"Station"},{"name":"Rødby Øst","code":"RFØ","type":"Teknisk Station"},{"name":"Rødby Færge","code":"RF","type":"Station"},{"name":"Væggerløse","code":"VØ","type":"Teknisk Station"},{"name":"Fiskebæk","code":"FI","type":"Teknisk Station"},{"name":"Gedser","code":"GE","type":"Station"},{"name":"Gadstrup","code":"GT","type":"Station"},{"name":"Havdrup","code":"HD","type":"Station"},{"name":"Lille Skensved","code":"LW","type":"Station"},{"name":"Ølby","code":"ØLB","type":"Trinbræt"},{"name":"Køge","code":"KJ","type":"Station"},{"name":"Herfølge","code":"HF","type":"Station"},{"name":"Tureby","code":"TH","type":"Station"},{"name":"Haslev","code":"HZ","type":"Station"},{"name":"Holme-Olstrup","code":"OL","type":"Station"},{"name":"Næstved Nord","code":"NÆN","type":"Trinbræt"},{"name":"Lejre","code":"LJ","type":"Station"},{"name":"Hvalsø","code":"HV","type":"Station"},{"name":"Tølløse","code":"TØ","type":"Station"},{"name":"Vipperød","code":"PE","type":"Station"},{"name":"Holbæk","code":"HK","type":"Station"},{"name":"Regstrup","code":"RT","type":"Station"},{"name":"Knabstrup","code":"KS","type":"Trinbræt"},{"name":"Mørkøv","code":"MØ","type":"Station"},{"name":"Jyderup","code":"JY","type":"Station"},{"name":"Svebølle","code":"SE","type":"Station"},{"name":"Værslev","code":"VÆ","type":"Teknisk Station"},{"name":"Kalundborg Øst","code":"KBØ","type":"Trinbræt"},{"name":"Kalundborg","code":"KB","type":"Station"},{"name":"København G","code":"GB","type":"Teknisk Station"},{"name":"København Syd","code":"NEL","type":"Trinbræt"},{"name":"Vigerslev","code":"IG","type":"Teknisk Station"},{"name":"Svanemøllen","code":"SAM","type":"Teknisk Station"},{"name":"Østerport","code":"KK","type":"Teknisk Station"},{"name":"Grønholt","code":"GRT","type":"Trinbræt"},{"name":"Kratbjerg","code":"KRB","type":"Trinbræt"},{"name":"Fredensborg","code":"FD","type":"Station"},{"name":"Langerød","code":"LRT","type":"Trinbræt"},{"name":"Kvistgård","code":"KÅ","type":"Trinbræt"},{"name":"Mørdrup","code":"MØT","type":"Trinbræt"},{"name":"Nørreport","code":"KN","type":"Trinbræt"},{"name":"Helgoland","code":"HGL","type":"Teknisk Station"},{"name":"Hellerup","code":"HL","type":"Station"},{"name":"Klampenborg","code":"KL","type":"Station"},{"name":"Skodsborg","code":"SÅ","type":"Station"},{"name":"Vedbæk","code":"VB","type":"Trinbræt"},{"name":"Rungsted Kyst","code":"RU","type":"Station"},{"name":"Kokkedal","code":"OK","type":"Trinbræt"},{"name":"Nivå","code":"NI","type":"Station"},{"name":"Humlebæk","code":"HUM","type":"Trinbræt"},{"name":"Espergærde","code":"GÆ","type":"Trinbræt"},{"name":"Snekkersten","code":"SQ","type":"Station"},{"name":"Helsingør","code":"HG","type":"Station"},{"name":"Bavnehøj","code":"BAN","type":"Teknisk Station"},{"name":"Kalvebod","code":"KLV","type":"Teknisk Station"},{"name":"Ørestad","code":"ØRE","type":"Trinbræt"},{"name":"Tårnby","code":"TÅT","type":"Trinbræt"},{"name":"Københavns Lufthavn","code":"CPH","type":"Station"},{"name":"Gribsvad","code":"GRI","type":"Teknisk Station"},{"name":"Odense Sygehus","code":"OSS","type":"Trinbræt"},{"name":"Fruens Bøge","code":"FRS","type":"Station"},{"name":"Hjallese","code":"HJS","type":"Trinbræt"},{"name":"Højby","code":"HØS","type":"Station"},{"name":"Årslev","code":"ÅS","type":"Station"},{"name":"Pederstrup","code":"PDS","type":"Trinbræt"},{"name":"Ringe","code":"RE","type":"Station"},{"name":"Rudme","code":"RUS","type":"Trinbræt"},{"name":"Kværndrup","code":"KVS","type":"Station"},{"name":"Stenstrup","code":"STS","type":"Station"},{"name":"Stenstrup Syd","code":"SIS","type":"Trinbræt"},{"name":"Svendborg Vest","code":"SVV","type":"Trinbræt"},{"name":"Svendborg","code":"SVG","type":"Station"},{"name":"Hjulby","code":"JU","type":"Teknisk Station"},{"name":"Ullerslev","code":"UV","type":"Teknisk Station"},{"name":"Langeskov","code":"LV","type":"Trinbræt"},{"name":"Marslev","code":"MV","type":"Teknisk Station"},{"name":"Odense","code":"OD","type":"Station"},{"name":"Odense Vest","code":"ODV","type":"Teknisk Station"},{"name":"Holmstrup","code":"HP","type":"Station"},{"name":"Tommerup","code":"TP","type":"Station"},{"name":"Skalbjerg","code":"SC","type":"Trinbræt"},{"name":"Bred","code":"BD","type":"Trinbræt"},{"name":"Aarup","code":"AP","type":"Station"},{"name":"Gelsted","code":"GD","type":"Trinbræt"},{"name":"Ejby","code":"EB","type":"Station"},{"name":"Nørre Aaby","code":"NA","type":"Trinbræt"},{"name":"Kavslunde","code":"KA","type":"Station"},{"name":"Middelfart","code":"MD","type":"Station"},{"name":"Snoghøj","code":"SNO","type":"Teknisk Station"},{"name":"Fredericia","code":"FA","type":"Station"},{"name":"Fredericia godsstation","code":"GFA","type":"Teknisk Station"},{"name":"Børkop","code":"BK","type":"Station"},{"name":"Brejning","code":"BET","type":"Trinbræt"},{"name":"Vejle","code":"VJ","type":"Station"},{"name":"Hedensted","code":"HED","type":"Station"},{"name":"Horsens","code":"HS","type":"Station"},{"name":"Hovedgård","code":"HÅ","type":"Teknisk Station"},{"name":"Skanderborg","code":"SD","type":"Station"},{"name":"Hørning","code":"HX","type":"Station"},{"name":"Viby Jylland","code":"VI","type":"Trinbræt"},{"name":"Aarhus H","code":"AR","type":"Station"},{"name":"Brabrand","code":"BR","type":"Teknisk Station"},{"name":"Aarhus Logistikparken","code":"ARL","type":"Teknisk Station"},{"name":"Hinnerup","code":"HN","type":"Station"},{"name":"Hadsten","code":"HA","type":"Station"},{"name":"Langå","code":"LG","type":"Station"},{"name":"Randers","code":"RD","type":"Station"},{"name":"Fårup","code":"FP","type":"Teknisk Station"},{"name":"Hobro","code":"HB","type":"Station"},{"name":"Arden","code":"AD","type":"Trinbræt"},{"name":"Skørping","code":"SØ","type":"Station"},{"name":"Støvring","code":"SR","type":"Trinbræt"},{"name":"Svenstrup Jylland","code":"SN","type":"Trinbræt"},{"name":"Skalborg","code":"OG","type":"Trinbræt"},{"name":"Aalborg","code":"AB","type":"Station"},{"name":"Aalborg Vestby","code":"ABV","type":"Trinbræt"},{"name":"Aalborg Havn","code":"ABH","type":"Teknisk Station"},{"name":"Lindholm","code":"LIH","type":"Station"},{"name":"Sulsted","code":"SU","type":"Teknisk Station"},{"name":"Brønderslev","code":"BL","type":"Station"},{"name":"Vrå","code":"VR","type":"Station"},{"name":"Hjørring","code":"HJ","type":"Station"},{"name":"Hjørring Øst","code":"HJØ","type":"Trinbræt"},{"name":"Sindal","code":"SA","type":"Station"},{"name":"Tolne","code":"TO","type":"Trinbræt"},{"name":"Kvissel","code":"KV","type":"Station"},{"name":"Frederikshavn","code":"FH","type":"Station"},{"name":"Taulov","code":"TL","type":"Station"},{"name":"Taulov kombiterminal","code":"TLK","type":"Kombiterminal"},{"name":"Kolding","code":"KD","type":"Station"},{"name":"Lunderskov","code":"LK","type":"Station"},{"name":"Vamdrup","code":"VM","type":"Station"},{"name":"Farris","code":"FZ","type":"Teknisk Station"},{"name":"Sommersted","code":"SST","type":"Teknisk Station"},{"name":"Vojens","code":"OJ","type":"Station"},{"name":"Rødekro","code":"RQ","type":"Station"},{"name":"Tinglev","code":"TE","type":"Station"},{"name":"Vejbæk","code":"VK","type":"Teknisk Station"},{"name":"Padborg kombiterminal","code":"PAK","type":"Kombiterminal"},{"name":"Padborg","code":"PA","type":"Station"},{"name":"Sønderborg","code":"SDB","type":"Station"},{"name":"Gråsten","code":"GST","type":"Station"},{"name":"Kliplev","code":"KW","type":"Trinbræt"},{"name":"Vejen","code":"VN","type":"Station"},{"name":"Brørup","code":"BP","type":"Trinbræt"},{"name":"Holsted","code":"HQ","type":"Station"},{"name":"Gørding","code":"GØ","type":"Trinbræt"},{"name":"Bramming","code":"BM","type":"Station"},{"name":"Tjæreborg","code":"TB","type":"Trinbræt"},{"name":"Jerne","code":"JNE","type":"Trinbræt"},{"name":"Esbjerg","code":"ES","type":"Station"},{"name":"Esbjerg Havn","code":"ESH","type":"Teknisk Station"},{"name":"Sejstrup","code":"SEJ","type":"Trinbræt"},{"name":"Gredstedbro","code":"GS","type":"Station"},{"name":"Ribe Nørremark","code":"RBN","type":"Trinbræt"},{"name":"Ribe","code":"RB","type":"Station"},{"name":"Hviding","code":"VD","type":"Trinbræt"},{"name":"Rejsby","code":"REJ","type":"Trinbræt"},{"name":"Brøns","code":"BRR","type":"Trinbræt"},{"name":"Skærbæk","code":"ÆK","type":"Station"},{"name":"Døstrup Sønderjylland","code":"DS","type":"Trinbræt"},{"name":"Bredebro","code":"BW","type":"Station"},{"name":"Visby","code":"VIS","type":"Trinbræt"},{"name":"Tønder Nord","code":"TRN","type":"Trinbræt"},{"name":"Tønder","code":"TDR","type":"Station"},{"name":"Spangsbjerg","code":"ESN","type":"Trinbræt"},{"name":"Gjesing","code":"GJE","type":"Trinbræt"},{"name":"Guldager","code":"GU","type":"Station"},{"name":"Varde Kaserne","code":"VKA","type":"Trinbræt"},{"name":"Varde","code":"VA","type":"Station"},{"name":"Varde Nord","code":"VNO","type":"Trinbræt"},{"name":"Sig","code":"IS","type":"Trinbræt"},{"name":"Tistrup","code":"TR","type":"Station"},{"name":"Gårde","code":"GÅ","type":"Trinbræt"},{"name":"Ølgod","code":"ØG","type":"Station"},{"name":"Tarm","code":"TA","type":"Trinbræt"},{"name":"Skjern","code":"SJ","type":"Station"},{"name":"Lem","code":"LM","type":"Station"},{"name":"Ringkøbing","code":"RJ","type":"Station"},{"name":"Hee","code":"HE","type":"Trinbræt"},{"name":"Tim","code":"TM","type":"Trinbræt"},{"name":"Ulfborg","code":"UF","type":"Station"},{"name":"Vemb","code":"VEM","type":"Station"},{"name":"Bur","code":"BU","type":"Trinbræt"},{"name":"Holstebro","code":"HO","type":"Station"},{"name":"Hjerm","code":"HM","type":"Station"},{"name":"Struer","code":"STR","type":"Station"},{"name":"Ulstrup","code":"UP","type":"Station"},{"name":"Bjerringbro","code":"BJ","type":"Station"},{"name":"Rødkærsbro","code":"RK","type":"Station"},{"name":"Rindsholm","code":"RN","type":"Teknisk Station"},{"name":"Viborg","code":"VG","type":"Station"},{"name":"Ravnstrup","code":"RA","type":"Teknisk Station"},{"name":"Sparkær","code":"SP","type":"Trinbræt"},{"name":"Stoholm","code":"SM","type":"Station"},{"name":"Højslev","code":"HØ","type":"Station"},{"name":"Skive","code":"SK","type":"Station"},{"name":"Rønbjerg","code":"RØB","type":"Teknisk Station"},{"name":"Vinderup","code":"VP","type":"Station"},{"name":"Tvis","code":"TS","type":"Teknisk Station"},{"name":"Aulum","code":"UU","type":"Station"},{"name":"Vildbjerg","code":"ID","type":"Station"},{"name":"Skibbild","code":"IB","type":"Teknisk Station"},{"name":"Gødstrup","code":"GP","type":"Trinbræt"},{"name":"Herning","code":"HR","type":"Station"},{"name":"Kølkær","code":"KE","type":"Teknisk Station"},{"name":"Fasterholt","code":"FT","type":"Teknisk Station"},{"name":"Brande","code":"BB","type":"Station"},{"name":"Thyregod","code":"TY","type":"Station"},{"name":"Give","code":"GW","type":"Station"},{"name":"Gadbjerg","code":"GG","type":"Teknisk Station"},{"name":"Jelling","code":"JL","type":"Station"},{"name":"Grejsdal","code":"GES","type":"Teknisk Station"},{"name":"Vejle Sygehus","code":"VJS","type":"Trinbræt"},{"name":"Humlum","code":"UM","type":"Trinbræt"},{"name":"Oddesund Nord","code":"NO","type":"Trinbræt"},{"name":"Uglev","code":"UL","type":"Trinbræt"},{"name":"Hvidbjerg","code":"HW","type":"Station"},{"name":"Lyngs","code":"LN","type":"Trinbræt"},{"name":"Ydby","code":"YD","type":"Trinbræt"},{"name":"Hurup Thy","code":"UR","type":"Station"},{"name":"Bedsted Thy","code":"BN","type":"Station"},{"name":"Hørdum","code":"HÆ","type":"Trinbræt"},{"name":"Snedsted","code":"SNE","type":"Station"},{"name":"Sjørring","code":"RI","type":"Trinbræt"},{"name":"Thisted","code":"TI","type":"Station"},{"name":"Alken","code":"AK","type":"Trinbræt"},{"name":"Ry","code":"RY","type":"Station"},{"name":"Laven","code":"LA","type":"Station"},{"name":"Svejbæk","code":"SV","type":"Station"},{"name":"Silkeborg","code":"SL","type":"Station"},{"name":"Funder","code":"FU","type":"Teknisk Station"},{"name":"Engesvang","code":"EV","type":"Station"},{"name":"Bording","code":"BG","type":"Station"},{"name":"Ikast","code":"IK","type":"Station"},{"name":"Hammerum","code":"HU","type":"Station"},{"name":"Birk Centerpark","code":"BIC","type":"Trinbræt"},{"name":"Herning Messecenter","code":"HRM","type":"Trinbræt"},{"name":"Studsgård","code":"STU","type":"Trinbræt"},{"name":"Kibæk","code":"KÆ","type":"Station"},{"name":"Troldhede","code":"TD","type":"Trinbræt"},{"name":"Borris","code":"BS","type":"Station"},{"name":"Skolebakken","code":"BAK","type":"Trinbræt"},{"name":"Østbanetorvet","code":"ØS","type":"Station"},{"name":"Den Permanente","code":"PER","type":"Trinbræt"},{"name":"Vestre Strandallé","code":"VSA","type":"Trinbræt"},{"name":"Torsøvej","code":"TOV","type":"Station"},{"name":"Lystrup","code":"LP","type":"Station"},{"name":"Hovmarken","code":"LPT","type":"Trinbræt"},{"name":"Hjortshøj","code":"HT","type":"Trinbræt"},{"name":"Skødstrup","code":"ØDS","type":"Station"},{"name":"Løgten","code":"LT","type":"Trinbræt"},{"name":"Hornslet","code":"OS","type":"Station"},{"name":"Mørke","code":"MR","type":"Trinbræt"},{"name":"Ryomgård","code":"RÅ","type":"Station"},{"name":"Kolind","code":"KO","type":"Trinbræt"},{"name":"Trustrup","code":"TU","type":"Trinbræt"},{"name":"Grenaa","code":"GR","type":"Station"},{"name":"Aabenraa","code":"ÅA","type":"Station"},{"name":"Haderslev By","code":"HAB","type":"Station"},{"name":"Aalborg Lufthavn","code":"ABL","type":"Station"},{"name":"Jægersborg","code":"JÆT","type":"Station"},{"name":"Nørgaardsvej","code":"NØV","type":"Trinbræt"},{"name":"Lyngby Lokal","code":"LYL","type":"Trinbræt"},{"name":"Fuglevad","code":"FGV","type":"Station"},{"name":"Brede","code":"BRE","type":"Trinbræt"},{"name":"Ørholm","code":"ØRH","type":"Station"},{"name":"Ravnholm","code":"RVH","type":"Trinbræt"},{"name":"Nærum","code":"NÆR","type":"Station"},{"name":"Favrholm","code":"FVT","type":"Trinbræt"},{"name":"Brødeskov","code":"BSK","type":"Station"},{"name":"Gørløse","code":"GØR","type":"Station"},{"name":"Skævinge","code":"SKV","type":"Station"},{"name":"Grimstrup","code":"GSF","type":"Trinbræt"},{"name":"Ølsted","code":"ØLS","type":"Station"},{"name":"Kregme","code":"KRF","type":"Station"},{"name":"Lille Kregme","code":"LLK","type":"Trinbræt"},{"name":"Frederiksværk","code":"FRV","type":"Station"},{"name":"Hanehoved","code":"HHF","type":"Trinbræt"},{"name":"Melby","code":"MEL","type":"Station"},{"name":"Dyssekilde","code":"DSK","type":"Station"},{"name":"Østerbjerg","code":"ØSF","type":"Station"},{"name":"Vibehus","code":"VIF","type":"Trinbræt"},{"name":"Hundested","code":"HUN","type":"Station"},{"name":"Hundested Havn","code":"HUH","type":"Station"},{"name":"Grønnehave","code":"GRØ","type":"Station"},{"name":"Marienlyst","code":"MAR","type":"Trinbræt"},{"name":"Højstrup","code":"HØP","type":"Station"},{"name":"Hellebæk","code":"HEL","type":"Station"},{"name":"Ålsgårde","code":"AAL","type":"Station"},{"name":"Skibstrup","code":"SKB","type":"Trinbræt"},{"name":"Saunte","code":"SAU","type":"Station"},{"name":"Karinebæk","code":"KAB","type":"Trinbræt"},{"name":"Hornbæk","code":"HNK","type":"Station"},{"name":"Horneby Sand","code":"HSA","type":"Trinbræt"},{"name":"Kildekrog","code":"KIL","type":"Trinbræt"},{"name":"Dronningmølle","code":"DRM","type":"Station"},{"name":"Firhøj","code":"FIR","type":"Station"},{"name":"Søborg","code":"SØB","type":"Trinbræt"},{"name":"Stæremosen","code":"STÆ","type":"Trinbræt"},{"name":"Gilleleje Øst","code":"GLØ","type":"Trinbræt"},{"name":"Slotspavillonen","code":"SPG","type":"Station"},{"name":"Gribsø","code":"GØG","type":"Trinbræt"},{"name":"Kagerup","code":"KGG","type":"Station"},{"name":"Mårum","code":"MMG","type":"Station"},{"name":"Saltrup","code":"SAG","type":"Trinbræt"},{"name":"Græsted Syd","code":"GRS","type":"Trinbræt"},{"name":"Græsted","code":"GRÆ","type":"Station"},{"name":"Pårup","code":"PPG","type":"Trinbræt"},{"name":"Fjellenstrup","code":"FJG","type":"Trinbræt"},{"name":"Gilleleje","code":"GLL","type":"Station"},{"name":"Duemose","code":"DUG","type":"Trinbræt"},{"name":"Helsinge","code":"HLG","type":"Station"},{"name":"Troldebakkerne","code":"TBA","type":"Trinbræt"},{"name":"Ørby","code":"ØBG","type":"Trinbræt"},{"name":"Vejby","code":"VEJ","type":"Station"},{"name":"Holløse","code":"HOG","type":"Trinbræt"},{"name":"Godhavn","code":"GHG","type":"Trinbræt"},{"name":"Tisvildeleje","code":"TVL","type":"Station"},{"name":"Stenhus","code":"SHT","type":"Trinbræt"},{"name":"Mårsø","code":"MÅ","type":"Teknisk Station"},{"name":"Ny Hagested","code":"HGT","type":"Trinbræt"},{"name":"Gislinge","code":"GSL","type":"Station"},{"name":"Svinninge","code":"SNG","type":"Station"},{"name":"Hørve","code":"HVE","type":"Station"},{"name":"Fårevejle","code":"FVJ","type":"Station"},{"name":"Asnæs","code":"ASN","type":"Station"},{"name":"Grevinge","code":"GRV","type":"Station"},{"name":"Vig","code":"VIG","type":"Station"},{"name":"Nørre Asmindrup","code":"NAM","type":"Station"},{"name":"Sommerland Sjælland","code":"SLT","type":"Trinbræt"},{"name":"Højby Sjælland","code":"HBS","type":"Station"},{"name":"Nyled","code":"NDT","type":"Trinbræt"},{"name":"Nykøbing Sjælland","code":"NKS","type":"Station"},{"name":"Havrebjerg","code":"HEB","type":"Station"},{"name":"Høng","code":"ØN","type":"Station"},{"name":"Ruds Vedby","code":"RUV","type":"Station"},{"name":"Skellebjerg","code":"SKL","type":"Station"},{"name":"Dianalund","code":"DIA","type":"Station"},{"name":"Vedde","code":"VED","type":"Trinbræt"},{"name":"Stenlille","code":"STL","type":"Station"},{"name":"Nyrup","code":"NYP","type":"Trinbræt"},{"name":"Bagmarken","code":"BMT","type":"Trinbræt"},{"name":"Store Merløse","code":"SMS","type":"Station"},{"name":"Kirke Eskilstrup","code":"KEK","type":"Station"},{"name":"Egøje","code":"EGØ","type":"Station"},{"name":"Vallø","code":"VLØ","type":"Station"},{"name":"Grubberholm","code":"GRH","type":"Station"},{"name":"Himlingøje","code":"HMØ","type":"Trinbræt"},{"name":"Hårlev","code":"HRL","type":"Station"},{"name":"Lille Linde","code":"LLI","type":"Trinbræt"},{"name":"Karise","code":"KRI","type":"Station"},{"name":"Tokkerup","code":"TOK","type":"Trinbræt"},{"name":"Faxe Syd","code":"FXS","type":"Station"},{"name":"Faxe Ladeplads","code":"FXL","type":"Station"},{"name":"Varpelev","code":"VAP","type":"Trinbræt"},{"name":"Klippinge","code":"KLP","type":"Station"},{"name":"Store Heddinge","code":"STH","type":"Station"},{"name":"Rødvig","code":"RDG","type":"Station"},{"name":"Øster Toreby","code":"ØTO","type":"Trinbræt"},{"name":"Grænge","code":"GRG","type":"Station"},{"name":"Sakskøbing","code":"SX","type":"Station"},{"name":"Maribo","code":"MRB","type":"Station"},{"name":"Ryde","code":"RYD","type":"Station"},{"name":"Søllested","code":"SØL","type":"Station"},{"name":"Avnede","code":"AVD","type":"Trinbræt"},{"name":"Nakskov","code":"NSK","type":"Station"},{"name":"Frisvadvej","code":"FRT","type":"Trinbræt"},{"name":"Varde Vest","code":"VAV","type":"Station"},{"name":"Boulevarden","code":"BOT","type":"Trinbræt"},{"name":"Hyllerslev","code":"HYV","type":"Trinbræt"},{"name":"Janderup","code":"JAD","type":"Station"},{"name":"Billum","code":"BIM","type":"Station"},{"name":"Hesselmed","code":"HST","type":"Teknisk Station"},{"name":"Oksbøl","code":"OKS","type":"Station"},{"name":"Baunhøj","code":"BAH","type":"Trinbræt"},{"name":"Vrøgum","code":"VRØ","type":"Trinbræt"},{"name":"Jegum","code":"JEG","type":"Trinbræt"},{"name":"Dyreby","code":"DY","type":"Trinbræt"},{"name":"Henne","code":"HNN","type":"Station"},{"name":"Outrup","code":"OVT","type":"Station"},{"name":"Løftgård","code":"LØT","type":"Trinbræt"},{"name":"Lunde","code":"LUJ","type":"Trinbræt"},{"name":"Nørre Nebel","code":"NBL","type":"Station"},{"name":"Odder","code":"ODD","type":"Station"},{"name":"Rude Havvej","code":"RUH","type":"Trinbræt"},{"name":"Assedrup","code":"ASS","type":"Station"},{"name":"Malling","code":"MAL","type":"Station"},{"name":"Beder","code":"BED","type":"Trinbræt"},{"name":"Vilhelmsborg","code":"VH","type":"Trinbræt"},{"name":"Mårslet","code":"MST","type":"Station"},{"name":"Mølleparken","code":"MPK","type":"Trinbræt"},{"name":"Nørrevænget","code":"NRV","type":"Trinbræt"},{"name":"Tranbjerg","code":"TRG","type":"Station"},{"name":"Gunnar Clausensvej","code":"GCT","type":"Trinbræt"},{"name":"Øllegårdsvej","code":"ØGT","type":"Trinbræt"},{"name":"Rosenhøj","code":"RH","type":"Trinbræt"},{"name":"Viby Jylland","code":"VIJ","type":"Station"},{"name":"Kongsvang","code":"KGV","type":"Trinbræt"},{"name":"Balleby","code":"BAT","type":"Trinbræt"},{"name":"Klinkby","code":"KLI","type":"Trinbræt"},{"name":"Nejrup","code":"NET","type":"Trinbræt"},{"name":"Strande","code":"STA","type":"Station"},{"name":"Victoria Street Station","code":"VIC","type":"Trinbræt"},{"name":"Vrist","code":"VRI","type":"Trinbræt"},{"name":"Harboøre","code":"HBØ","type":"Station"},{"name":"Rønland","code":"RØN","type":"Station"},{"name":"Sprogøvej","code":"THS","type":"Trinbræt"},{"name":"Thyborøn Kirke","code":"THT","type":"Trinbræt"},{"name":"Thyborøn Havn","code":"THB","type":"Station"},{"name":"Amstrup","code":"AMT","type":"Trinbræt"},{"name":"Bækmarksbro","code":"BKM","type":"Station"},{"name":"Sinkbæk","code":"SIT","type":"Trinbræt"},{"name":"Fåre","code":"FRE","type":"Station"},{"name":"Ramme","code":"RAM","type":"Station"},{"name":"Bonnet","code":"BNT","type":"Station"},{"name":"Armose","code":"ARM","type":"Trinbræt"},{"name":"Lemvig","code":"LMV","type":"Station"},{"name":"Kvægtorvet","code":"KT","type":"Trinbræt"},{"name":"Teglgårdsvej","code":"TGV","type":"Trinbræt"},{"name":"Herregårdsparken","code":"HGP","type":"Trinbræt"},{"name":"Vellingshøj","code":"VLH","type":"Trinbræt"},{"name":"Langholm","code":"LGH","type":"Teknisk Station"},{"name":"Vidstrup","code":"VID","type":"Trinbræt"},{"name":"Tornby","code":"TNB","type":"Station"},{"name":"Horne","code":"HON","type":"Trinbræt"},{"name":"Emmersbæk","code":"EMM","type":"Trinbræt"},{"name":"Hirtshals","code":"HHS","type":"Station"},{"name":"Lilleheden","code":"LHE","type":"Trinbræt"},{"name":"Strandby","code":"STB","type":"Station"},{"name":"Rimmen","code":"RIM","type":"Trinbræt"},{"name":"Jerup","code":"JEU","type":"Station"},{"name":"Napstjert","code":"NAP","type":"Trinbræt"},{"name":"Ålbæk","code":"ÅLB","type":"Station"},{"name":"Bunken","code":"BUK","type":"Trinbræt"},{"name":"Hulsig","code":"HUL","type":"Station"},{"name":"Frederikshavnsvej","code":"FHV","type":"Trinbræt"},{"name":"Skagen","code":"SGB","type":"Station"},{"name":"Dybbølsbro","code":"DBT","type":"Trinbræt"},{"name":"Skelbæk","code":"SLB","type":"Teknisk Station"},{"name":"Carlsberg","code":"CB","type":"Trinbræt"},{"name":"Danshøj","code":"DAH","type":"Trinbræt"},{"name":"Hvidovre Nær","code":"HIT","type":"Trinbræt"},{"name":"Rødovre","code":"RDO","type":"Trinbræt"},{"name":"Brøndbyøster","code":"BØT","type":"Trinbræt"},{"name":"Albertslund","code":"ALB","type":"Trinbræt"},{"name":"Taastrup","code":"TÅ","type":"Station"},{"name":"Vesterport","code":"VPT","type":"Trinbræt"},{"name":"Nordhavn","code":"NHT","type":"Trinbræt"},{"name":"Bernstorffsvej","code":"BFT","type":"Trinbræt"},{"name":"Gentofte","code":"GJ","type":"Station"},{"name":"Lyngby","code":"LY","type":"Station"},{"name":"Sorgenfri","code":"SFT","type":"Trinbræt"},{"name":"Virum","code":"VIR","type":"Trinbræt"},{"name":"Holte","code":"HOT","type":"Station"},{"name":"Birkerød","code":"BI","type":"Station"},{"name":"Høvelte","code":"HØV","type":"Trinbræt"},{"name":"Allerød","code":"LI","type":"Station"},{"name":"Hillerød","code":"HI","type":"Station"},{"name":"Langgade","code":"VAT","type":"Trinbræt"},{"name":"Peter Bangsvej","code":"PBT","type":"Trinbræt"},{"name":"Flintholm","code":"FL","type":"Trinbræt"},{"name":"Vanløse","code":"VAN","type":"Station"},{"name":"Jyllingevej","code":"JYT","type":"Trinbræt"},{"name":"Islev","code":"IST","type":"Trinbræt"},{"name":"Husum","code":"HUT","type":"Trinbræt"},{"name":"Herlev","code":"HER","type":"Station"},{"name":"Skovlunde","code":"SKO","type":"Trinbræt"},{"name":"Malmparken","code":"MPT","type":"Trinbræt"},{"name":"Ballerup","code":"BA","type":"Station"},{"name":"Måløv","code":"MW","type":"Trinbræt"},{"name":"Kildedal","code":"KID","type":"Trinbræt"},{"name":"Veksø","code":"VS","type":"Station"},{"name":"Stenløse","code":"ST","type":"Trinbræt"},{"name":"Egedal","code":"EGD","type":"Trinbræt"},{"name":"Ølstykke","code":"ØL","type":"Station"},{"name":"Vinge","code":"VNG","type":"Trinbræt"},{"name":"Frederikssund","code":"FS","type":"Station"},{"name":"Ryparken","code":"RYT","type":"Trinbræt"},{"name":"Emdrup","code":"EMT","type":"Trinbræt"},{"name":"Dyssegård","code":"DYT","type":"Station"},{"name":"Vangede","code":"ANG","type":"Trinbræt"},{"name":"Kildebakke","code":"KET","type":"Trinbræt"},{"name":"Buddinge","code":"BUD","type":"Station"},{"name":"Stengården","code":"SGT","type":"Trinbræt"},{"name":"Bagsværd","code":"BAV","type":"Trinbræt"},{"name":"Skovbrynet","code":"SKT","type":"Trinbræt"},{"name":"Hareskov","code":"HAR","type":"Station"},{"name":"Værløse","code":"VÆR","type":"Trinbræt"},{"name":"Farum","code":"FM","type":"Station"},{"name":"Sydhavn","code":"SYV","type":"Trinbræt"},{"name":"Sjælør","code":"SJÆ","type":"Trinbræt"},{"name":"Åmarken","code":"ÅM","type":"Station"},{"name":"Friheden","code":"FRH","type":"Trinbræt"},{"name":"Avedøre","code":"AVØ","type":"Trinbræt"},{"name":"Brøndby Strand","code":"BSA","type":"Trinbræt"},{"name":"Vallensbæk","code":"VLB","type":"Station"},{"name":"Ishøj","code":"IH","type":"Trinbræt"},{"name":"Hundige","code":"UND","type":"Station"},{"name":"Greve","code":"GRE","type":"Trinbræt"},{"name":"Karlslunde","code":"KLU","type":"Station"},{"name":"Solrød Strand","code":"SOL","type":"Station"},{"name":"Jersie","code":"JSI","type":"Trinbræt"},{"name":"Ølsemagle","code":"ØLM","type":"Teknisk Station"},{"name":"Charlottenlund","code":"CH","type":"Trinbræt"},{"name":"Ordrup","code":"OP","type":"Trinbræt"},{"name":"Vigerslev Allé","code":"VGT","type":"Trinbræt"},{"name":"Ålholm","code":"ÅLM","type":"Trinbræt"},{"name":"KB Hallen","code":"KBN","type":"Trinbræt"},{"name":"Grøndal","code":"GHT","type":"Trinbræt"},{"name":"Fuglebakken","code":"FUT","type":"Trinbræt"},{"name":"Nørrebro","code":"NØ","type":"Trinbræt"},{"name":"Bispebjerg","code":"BIT","type":"Trinbræt"},{"name":"Lersøen","code":"LER","type":"Teknisk Station"}];
+let addedBtr=0;
+for(const station of btrStations){if(addStation(station.name,station.code))addedBtr++;}
+
+function stationCode(){const raw=$('station').value.trim();if(!raw)return null;const key=normalizeStation(raw);return stationsByName.get(key)|| (stationsByCode.has(raw.toUpperCase())?raw.toUpperCase():(/^[A-Za-zÆØÅæøå]{2,5}$/.test(raw)?raw.toUpperCase():null))}
+function connect(){
+ const station=stationCode();
+ if(!station){$('status').textContent='Vælg en station fra listen eller indtast en gyldig stationskode';$('status').className='error';return}
+ disconnect();state.status.clear();state.snapshots.clear();render();
+ $('stationName').textContent=stationsByCode.get(station)||station;
+ const base='wss://api.mittog.dk/api/ws';
+ connectOne('Afgange',`${base}/departure/${station}/dinstation/`);
+ connectOne('Ankomster',`${base}/arrival/${station}/dinstation/`);
+ for(let track=1;track<=12;track++)connectOne('Spor '+track,`${base}/track/${station}/${track}/position/`);
+}
+
+
+// Selvstændig PDF-generator: ingen eksterne biblioteker, intet udskriftsvindue.
+function downloadTrainPdf(){
+ const source=document.querySelector('.tablewrap table');
+ const headers=[...source.querySelectorAll('thead th')].map(x=>x.textContent.trim());
+ const trs=[...source.querySelectorAll('tbody tr')];
+ const rows=trs.map(tr=>[...tr.cells].map((c,i)=>{
+   // PDF: vis kun operatørens navn, ikke det dekorative kode-symbol.
+   const label=i===2 ? c.querySelector('.op-name') : null;
+   return (label||c).textContent.trim().replace(/\s+/g,' ');
+ }));
+ const now=new Date(),pad=n=>String(n).padStart(2,'0');
+ const stamp=`${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())}_${pad(now.getHours())}.${pad(now.getMinutes())}`;
+ const station=($('stationName').textContent||'Station').trim();
+ const filename=`${stamp}_Togoversigt_${station.replace(/[\/:*?"<>|]/g,'').replace(/\s+/g,'_')}.pdf`;
+ const W=842,H=595, left=24,top=65,rowH=22,headH=26;
+ const widths=[40,83,174,188,94,94,121]; // total 794 = A4 landscape minus 48pt
+ const xPositions=[left];for(const w of widths)xPositions.push(xPositions.at(-1)+w);
+ const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+ const winAnsi=x=>String(x).replace(/[→➜]/g,'->').replace(/[←]/g,'<-').replace(/[–—]/g,'-').replace(/[^\x20-\x7e\u00a0-\u00ff]/g,'?');
+ const text=(x,y,str,size=9,bold=false,color='0.10 0.16 0.24')=>
+   `${color} rg BT /${bold?'F2':'F1'} ${size} Tf 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${esc(winAnsi(str))}) Tj ET\n`;
+ const fill=(x,y,w,h,r,g,b)=>`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg ${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f\n`;
+ const hexRGB=h=>{let m=/^#([0-9a-f]{6})$/i.exec(h);return m?[0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16)/255):[.55,.63,.72]};
+ const fit=(str,width,fontSize=9)=>{let s=winAnsi(str);const max=Math.max(3,Math.floor((width-10)/(fontSize*.51)));return s.length>max?s.slice(0,max-3)+'...':s};
+ const pages=[];let page='',y=0, count=0;
+ function newPage(){
+   if(page)pages.push(page);
+   page=fill(0,0,W,H,1,1,1);
+   page+=text(left,H-34,'Togoversigt Danmark - '+station,16,true);
+   page+=text(W-183,H-33,stamp.replace('_','  '),9,false);
+   y=H-top;
+   page+=fill(left,y-headH,W-left*2,headH,.12,.18,.27);
+   headers.forEach((h,i)=>page+=text(xPositions[i]+5,y-17,fit(h,widths[i],9),9,true,'1 1 1'));
+   y-=headH;count=0;
+ }
+ newPage();
+ if(!rows.length){
+   page+=text(left+5,y-24,'Ingen tog vises i den aktuelle oversigt.',10);
+ }else{
+   rows.forEach((cells,idx)=>{
+     if(y-rowH<31)newPage();
+     const rgb=hexRGB(getComputedStyle(trs[idx]).getPropertyValue('--operator-row').trim());
+     const tint=rgb.map(v=>.90+v*.10);
+     page+=fill(left,y-rowH,W-left*2,rowH,...tint);
+     page+=fill(left,y-rowH,4,rowH,...rgb);
+     cells.forEach((value,i)=>{
+       const isCancelled=value.trim().toLowerCase()==='aflyst';
+       page+=text(xPositions[i]+6,y-15,fit(value,widths[i],8.6),8.6,false,isCancelled?'0.76 0.10 0.14':'0.10 0.16 0.24');
+     });
+     page+=fill(left,y-rowH,W-left*2,.35,.82,.85,.89);
+     y-=rowH;count++;
+   });
+ }
+ pages.push(page);
+ // PDF 1.4 med WinAnsi Helvetica og korrekt xref, som Acrobat kan åbne.
+ const objects=[null];
+ const add=obj=>{objects.push(obj);return objects.length-1};
+ const catalog=add(''),pagesRoot=add('');
+ const font1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+ const font2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+ const pageRefs=[];
+ for(const stream of pages){
+   const bytes=Array.from(stream,c=>c.charCodeAt(0)&255);
+   const content=add(`<< /Length ${bytes.length} >>\nstream\n${stream}endstream`);
+   const ref=add(`<< /Type /Page /Parent ${pagesRoot} 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 ${font1} 0 R /F2 ${font2} 0 R >> >> /Contents ${content} 0 R >>`);
+   pageRefs.push(ref);
+ }
+ objects[catalog]=`<< /Type /Catalog /Pages ${pagesRoot} 0 R >>`;
+ objects[pagesRoot]=`<< /Type /Pages /Kids [${pageRefs.map(n=>n+' 0 R').join(' ')}] /Count ${pageRefs.length} >>`;
+ let pdf='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',offsets=[0];
+ for(let i=1;i<objects.length;i++){offsets[i]=pdf.length;pdf+=`${i} 0 obj\n${objects[i]}\nendobj\n`;}
+ const xref=pdf.length;
+ pdf+=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+ for(let i=1;i<objects.length;i++)pdf+=`${String(offsets[i]).padStart(10,'0')} 00000 n \n`;
+ pdf+=`trailer\n<< /Size ${objects.length} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+ const blob=new Blob([Uint8Array.from(pdf,c=>c.charCodeAt(0)&255)],{type:'application/pdf'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+$('savePdf').addEventListener('click',()=>{
+ const btn=$('savePdf'),old=btn.textContent;
+ btn.disabled=true;btn.textContent='Gemmer PDF…';
+ try{downloadTrainPdf()}catch(err){console.error(err);alert('PDF kunne ikke gemmes: '+(err?.message||err))}
+ finally{btn.disabled=false;btn.textContent=old}
+});
+
+$('stationForm').onsubmit=e=>{e.preventDefault();connect()};
+$('station').addEventListener('change',()=>{if(stationCode())connect()});
+connect();
+// Opdater visningen løbende; 5 minutters frist regnes fra seneste relevante tidspunkt.
+setInterval(render,15000);
+</script></body></html>
